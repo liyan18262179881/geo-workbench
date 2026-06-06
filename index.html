@@ -387,6 +387,7 @@ textarea{resize:vertical;min-height:70px}
             <tr><td><strong>Step 2</strong></td><td>关键词部署</td><td>中/强商业词表 + 三阶段优先级</td><td>geo-keyword-miner</td></tr>
             <tr><td><strong>Step 3</strong></td><td>豆包市场检测</td><td>发布前诊断报告 + 竞品占位情况</td><td>geo-doubao-research</td></tr>
             <tr><td><strong>Step 4</strong></td><td>文章生产</td><td>五类平台文章 + 复制发布</td><td>geo-article-writer</td></tr>
+            <tr><td><strong>Step 5</strong></td><td>发布后复查</td><td>豆包收录对比 + 前后对比报告 + 下一步建议</td><td>geo-doubao-research</td></tr>
           </tbody>
         </table>
       </div>
@@ -580,7 +581,7 @@ const DB = {
   },
   _loadDemo(){
     this.clients['shiguang'] = {
-      id:'shiguang', step:3,
+      id:'shiguang', step:4,
       brand_name:'拾光伴学', brand_short:'拾光伴学',
       primary_city:'赣州', industry:'K12教育',
       core_services:['AI自习室','课后自习','学习管理'],
@@ -676,15 +677,15 @@ function renderHome(){
   `
 
   const cards = clients.map(c=>{
-    const steps = [c.step>=1,c.step>=2,c.step>=3,c.step>=4]
+    const steps = [c.step>=1,c.step>=2,c.step>=3,c.step>=4,c.step>=5]
     const bars = steps.map((done,i)=>`<div class="cc-step ${done?'done':(i===c.step-1?'active':'')}"></div>`).join('')
-    const stepLabel = ['待诊断','待关键词','待检测','待文章','已完成'][Math.min(c.step-1,4)]||''
+    const stepLabel = ['待诊断','待关键词','待检测','待文章','待复查','已完成'][Math.min(c.step-1,5)]||''
     return `<div class="client-card" onclick="openClient('${c.id}')">
       <h4>${c.brand_name}</h4>
       <div class="cc-sub">${c.primary_city} · ${c.industry}</div>
       <div class="cc-steps">${bars}</div>
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <span class="tag ${c.step>=4?'t-ok':'t-warn'}">${c.step>=4?'✅ 文章已生成':'Step '+c.step+' 进行中'}</span>
+        <span class="tag ${c.step>=5?'t-ok':c.step>=4?'t-industry':'t-warn'}">${c.step>=5?'✅ 已复查':c.step>=4?'⏳ 待发布复查':'Step '+c.step+' 进行中'}</span>
         <span style="font-size:11px;color:var(--sub)">${c.articles?.length||0} 篇文章</span>
       </div>
     </div>`
@@ -798,8 +799,9 @@ function renderClientPage(){
   const steps=[
     {label:'① 客户诊断',step:1},
     {label:'② 关键词部署',step:2},
-    {label:'③ 豆包检测',step:3},
-    {label:'④ 文章生产',step:4}
+    {label:'③ 发布前检测',step:3},
+    {label:'④ 文章生产',step:4},
+    {label:'⑤ 发布后复查',step:5}
   ]
   document.getElementById('step-bar').innerHTML = steps.map(s=>{
     const done = c.step > s.step
@@ -837,6 +839,7 @@ function renderStep(step){
   else if(step===2) el.innerHTML = renderKeywords(c)
   else if(step===3) el.innerHTML = renderDetection(c)
   else if(step===4) el.innerHTML = renderArticles(c)
+  else if(step===5) el.innerHTML = renderPostDetection(c)
 }
 
 // ── Step 1: 诊断 ──
@@ -1159,49 +1162,53 @@ function renderArticles(c){
     <div class="card-head"><h3>📋 待生成文章清单</h3><span class="ch-sub">基于已选关键词</span></div>
     <div class="card-body" style="overflow-x:auto">
       <table>
-        <thead><tr><th>关键词</th><th>文章类型</th><th>平台</th><th>操作</th></tr></thead>
+        <thead><tr><th>关键词 · 文章类型 · 平台</th><th style="text-align:right">操作</th></tr></thead>
         <tbody>
           ${selectedKws.map(k=>{
             const existing = c.articles.find(a=>a.keyword===k.word)
-            return `<tr>
-              <td><strong>${k.word}</strong></td>
-              <td><span class="tag ${artCls[k.art_type]}">${artLabel[k.art_type]}</span></td>
-              <td>${k.platforms.map(p=>`<span class="tag ${platCls[p]}">${platLabel[p]}</span>`).join(' ')}</td>
-              <td style="display:flex;gap:6px">
-                <button class="btn btn-primary btn-sm" onclick="showGen('${c.id}','${k.word}','${k.art_type}')">✍️ 生成文章</button>
-                ${existing
-                  ?`<span class="tag t-ok" style="align-self:center">✅ 已生成</span>`
-                  :''}
+            const artId = existing ? `body-${existing.id}` : ''
+            return `
+            <tr style="border-top:2px solid #f0f0f0">
+              <td style="padding-top:14px;padding-bottom:${existing?'6px':'14px'}">
+                <div style="font-weight:700;font-size:13px">${k.word}</div>
+                <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+                  <span class="tag ${artCls[k.art_type]}">${artLabel[k.art_type]}</span>
+                  ${k.platforms.map(p=>`<span class="tag ${platCls[p]}">${platLabel[p]}</span>`).join('')}
+                </div>
               </td>
-            </tr>`
+              <td style="padding-top:14px;padding-bottom:${existing?'6px':'14px'};text-align:right;vertical-align:top">
+                ${existing
+                  ? `<button class="btn btn-green btn-sm" onclick="copyArticle('${artId}',this)">📋 复制正文</button>
+                     <button class="btn btn-ghost btn-sm" style="margin-left:4px" onclick="humanizeArticle('${c.id}','${existing.id}',this)" title="去AI味">🧑 去AI味</button>
+                     <button class="btn btn-primary btn-sm" style="margin-left:4px" onclick="showGen('${c.id}','${k.word}','${k.art_type}')">🔄 重新生成</button>`
+                  : `<button class="btn btn-primary btn-sm" onclick="showGen('${c.id}','${k.word}','${k.art_type}')">✍️ 生成文章</button>`
+                }
+              </td>
+            </tr>
+            ${existing ? `
+            <tr>
+              <td colspan="2" style="padding-top:0;padding-bottom:14px">
+                <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px">
+                  <div id="${artId}" data-raw="${existing.body.replace(/"/g,'&quot;')}" style="display:none"></div>
+                  <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">📄 ${existing.title}</div>
+                  <div style="font-size:12px;color:#6b7280;line-height:1.7;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical">${stripMarkdown(existing.body).replace(/\n+/g,' ').trim().slice(0,180)}…</div>
+                  <button class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:11px" onclick="toggleFullArticle('full-${existing.id}',this)">展开全文</button>
+                  <div id="full-${existing.id}" style="display:none;margin-top:10px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap">${stripMarkdown(existing.body)}</div>
+                </div>
+              </td>
+            </tr>` : ''}
+            `
           }).join('')}
         </tbody>
       </table>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-head"><h3>📄 文章库</h3><span class="ch-sub">${c.articles.length} 篇 · 点击复制正文直接发布</span></div>
-    <div class="card-body" style="padding:12px">
-      ${c.articles.length===0?`<div style="text-align:center;color:var(--sub);padding:30px 0;font-size:13px">还没有文章，点击上方"生成Prompt"获取写稿提示词</div>`:''}
-      ${c.articles.map(a=>`
-      <div class="art-card" id="art-${a.id}">
-        <div class="art-head">
-          <span class="tag ${artCls[a.type]||'t-select'}">${artLabel[a.type]||'文章'}</span>
-          <div class="art-info">
-            <h4>${a.title}</h4>
-            <p>关键词：${a.keyword} &nbsp;|&nbsp; ${a.platforms?.map(p=>platLabel[p]).join('、')||'头条'}</p>
-          </div>
-        </div>
-        <div class="art-body" id="body-${a.id}" data-raw="${a.body.replace(/"/g,'&quot;')}">${formatBody(a.body)}</div>
-        <div class="art-foot">
-          <button class="btn btn-primary btn-sm" onclick="copyArticle('body-${a.id}',this)">📋 复制正文</button>
-          <button class="btn btn-ghost btn-sm" onclick="toggleBody('body-${a.id}',this)">展开全文</button>
-          <span class="note">${a.platforms?.includes('sohu')?'搜狐版：标题改为更中性表达，删电话':'仅发头条'}</span>
-        </div>
-      </div>`).join('')}
-    </div>
-  </div>
+  ${c.articles.length > 0 ? `
+  <div style="display:flex;justify-content:flex-end;margin-top:4px">
+    <button class="btn btn-primary" onclick="completeStep(4)">✅ 文章已发布，进入发布后复查 →</button>
+  </div>` : ''}
+  ${c.step>=5?`<div style="display:flex;justify-content:flex-end"><button class="btn btn-outline" onclick="gotoStep(5)">查看发布后复查 →</button></div>`:''}
   `
 }
 
@@ -1371,25 +1378,196 @@ function toggleBody(bodyId, btn){
   btn.textContent = open?'收起':'展开全文'
 }
 
+async function humanizeArticle(clientId, articleId, btn){
+  const c = DB.clients[clientId]
+  const article = c.articles.find(a=>a.id===articleId)
+  if(!article) return
+  if(!SETTINGS.apiKey){ alert('请先在设置里填写 API Key'); return }
+
+  const orig = btn.innerHTML
+  btn.disabled = true
+  btn.innerHTML = '<span class="spinner"></span>'
+
+  try{
+    const resp = await fetch(SETTINGS.serverUrl+'/api/humanize',{
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        text: article.body,
+        api_key: SETTINGS.apiKey,
+        provider: SETTINGS.provider,
+        model: SETTINGS.model || undefined
+      })
+    })
+    const data = await resp.json()
+    if(data.error){ alert('去AI味失败：'+data.error); btn.disabled=false; btn.innerHTML=orig; return }
+    article.body = data.content
+    DB.save()
+    btn.disabled = false
+    btn.innerHTML = '✅ 完成'
+    setTimeout(()=>{ btn.innerHTML=orig; renderStep(4) }, 1500)
+  }catch(e){
+    alert('无法连接本地服务')
+    btn.disabled = false
+    btn.innerHTML = orig
+  }
+}
+
+function toggleFullArticle(id, btn){
+  const el = document.getElementById(id)
+  const show = el.style.display === 'none'
+  el.style.display = show ? 'block' : 'none'
+  btn.textContent = show ? '收起' : '展开全文'
+}
+
 function scrollToArticle(artId){
   const el = document.getElementById('art-'+artId)
   if(el) el.scrollIntoView({behavior:'smooth',block:'start'})
 }
 
-// ── 文章正文格式化（多余空行 → 单段落）──
-function formatBody(text){
+// ── Step 5: 发布后复查 ──
+function renderPostDetection(c){
+  // 初始化发布后检测数据（复用发布前的关键词）
+  if(!c.post_detection || c.post_detection.length===0){
+    const selected = c.keywords.filter(k=>k.selected).slice(0,6)
+    c.post_detection = selected.map(k=>({word:k.word,has_brand:null,competitors:'',source:'',cited_article:'',note:''}))
+    DB.save()
+  }
+  const filledCount = c.post_detection.filter(d=>d.has_brand!==null).length
+  const allFilled = filledCount === c.post_detection.length && c.post_detection.length > 0
+
+  // 对比分析
+  const preBrand = c.detection ? c.detection.filter(d=>d.has_brand===true).length : 0
+  const postBrand = c.post_detection.filter(d=>d.has_brand===true).length
+  const newlyCited = c.post_detection.filter(d=>d.cited_article&&d.cited_article.length>1).length
+
+  return `
+  <div class="card">
+    <div class="card-head"><h3>📡 发布后复查说明</h3></div>
+    <div class="card-body">
+      <div style="font-size:14px;line-height:1.9;color:#374151">
+        <strong>目的：</strong>文章发布 3-7 天后，用同样的关键词再去豆包搜一遍，看你的品牌有没有出现、文章有没有被引用。<br><br>
+        <strong>和发布前检测的区别：</strong>多了一列"引用了哪篇文章"——如果豆包引用了你发的头条/搜狐文章，说明GEO生效了。<br><br>
+        <strong>建议频率：</strong>发布后第7天查一次，之后每两周查一次，持续追踪。
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>🔍 发布后检测表</h3><span class="ch-sub">人工填写 · 已填 ${filledCount}/${c.post_detection.length}</span></div>
+    <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+      ${c.post_detection.map((d,i)=>`
+      <div style="border:1px solid ${d.has_brand===null?'var(--border)':d.has_brand===true?'#86efac':'#e5e7eb'};border-radius:10px;padding:16px;background:${d.has_brand===true?'#f0fdf4':d.has_brand===false?'#fafafa':'#fafafa'}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <div style="font-size:15px;font-weight:700">🔎 ${d.word}</div>
+          <a href="https://www.doubao.com/chat/?query=${encodeURIComponent(d.word)}" target="_blank"
+             style="font-size:12px;color:var(--purple);text-decoration:none;background:var(--purple-light);padding:3px 10px;border-radius:20px;font-weight:600">
+            → 点这里在豆包搜
+          </a>
+          ${d.has_brand===true?'<span style="margin-left:auto;font-size:12px;font-weight:700;color:var(--green)">✅ 品牌已出现！</span>':d.has_brand===false?'<span style="margin-left:auto;font-size:12px;color:var(--sub)">未出现</span>':'<span style="margin-left:auto;font-size:12px;color:var(--sub)">— 待查</span>'}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase">① 有没有出现品牌？</div>
+            <select class="detect-input" onchange="updatePostDetect('${c.id}',${i},'has_brand',this.value)" style="width:100%">
+              <option value="" ${d.has_brand===null?'selected':''}>— 待查</option>
+              <option value="true" ${d.has_brand===true?'selected':''}>✅ 出现了</option>
+              <option value="false" ${d.has_brand===false?'selected':''}>❌ 未出现</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase">② 出现了哪些品牌？</div>
+            <input class="detect-input" value="${d.competitors||''}" placeholder="没有就填"无"" onchange="updatePostDetect('${c.id}',${i},'competitors',this.value)" style="width:100%"/>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase">③ 引用来源平台</div>
+            <input class="detect-input" value="${d.source||''}" placeholder="头条/搜狐/无引用" onchange="updatePostDetect('${c.id}',${i},'source',this.value)" style="width:100%"/>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:5px;text-transform:uppercase">④ 引用了你的哪篇文章？</div>
+            <input class="detect-input" value="${d.cited_article||''}" placeholder="文章标题或"否"" onchange="updatePostDetect('${c.id}',${i},'cited_article',this.value)" style="width:100%"/>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  ${allFilled ? `
+  <div class="card">
+    <div class="card-head"><h3>📊 发布前后对比报告</h3><span class="ch-sub">自动生成</span></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-box"><div class="stat-num">${preBrand}</div><div class="stat-lbl">发布前品牌出现</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--green)">${postBrand}</div><div class="stat-lbl">发布后品牌出现</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--purple)">${newlyCited}</div><div class="stat-lbl">文章被引用</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:${postBrand>preBrand?'var(--green)':'var(--amber)'}">${postBrand>preBrand?'↑有效':'→持平'}</div><div class="stat-lbl">GEO效果</div></div>
+      </div>
+      <div class="tip ${postBrand>preBrand||newlyCited>0?'tip-green':'tip-amber'}" style="margin-bottom:14px">
+        ${postBrand>preBrand||newlyCited>0
+          ? `🟢 <strong>GEO有效：</strong>品牌可见性从 ${preBrand} 个词提升到 ${postBrand} 个词${newlyCited>0?`，${newlyCited} 篇文章被豆包引用`:''}。继续按计划发布第二阶段关键词。`
+          : `🟡 <strong>尚未收录：</strong>发布后品牌出现情况与发布前相同。可能原因：发布时间不够长（建议再等7天）、文章标题与关键词匹配度不够、平台账号权重低。`}
+      </div>
+      <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+        <div style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">下一步建议</div>
+        ${postBrand>preBrand||newlyCited>0
+          ? `<div style="font-size:13px;line-height:1.8">
+              <div style="margin-bottom:6px">✅ 继续发布第二阶段关键词文章（赣州孩子不自律怎么办 等5个词）</div>
+              <div style="margin-bottom:6px">✅ 两周后再做一次复查，追踪更多关键词的收录情况</div>
+              <div>✅ 记录被引用的文章结构，作为后续写稿的参考模板</div>
+            </div>`
+          : `<div style="font-size:13px;line-height:1.8">
+              <div style="margin-bottom:6px">⚡ 检查文章标题是否包含完整关键词</div>
+              <div style="margin-bottom:6px">⚡ 确认头条/搜狐账号已正常发布且未被限流</div>
+              <div style="margin-bottom:6px">⚡ 再等7天后重新复查（豆包收录有延迟）</div>
+              <div>⚡ 考虑补充文章的EEAT证据，增强可信度</div>
+            </div>`}
+      </div>
+    </div>
+  </div>` : `
+  <div class="tip tip-amber" style="text-align:center">
+    还剩 ${c.post_detection.length - filledCount} 个词没填完 → 全部填完后自动生成前后对比报告
+  </div>`}
+  `
+}
+
+function updatePostDetect(id, idx, field, val){
+  const c = DB.clients[id]
+  if(!c.post_detection) return
+  if(field==='has_brand'){
+    if(val==='true') c.post_detection[idx].has_brand = true
+    else if(val==='false') c.post_detection[idx].has_brand = false
+    else c.post_detection[idx].has_brand = null
+  } else {
+    c.post_detection[idx][field] = val
+  }
+  DB.save()
+  setTimeout(()=>{ renderStep(5) },80)
+}
+
+// ── 文章正文格式化（去Markdown + 多余空行 → 单段落）──
+function stripMarkdown(text){
   return text
-    .split(/\n{2,}/)                          // 两个及以上换行拆段
-    .map(p => p.replace(/\n/g,'<br>').trim()) // 段内单换行转<br>
-    .filter(p => p)                           // 去空段
+    .replace(/^#{1,6}\s*/gm, '')      // 去 # 标题符号
+    .replace(/\*\*(.+?)\*\*/g, '$1') // 去 **加粗**
+    .replace(/\*(.+?)\*/g, '$1')     // 去 *斜体*
+    .replace(/^[-*]\s+/gm, '')       // 去列表符号
+    .replace(/\|.+\|/g, '')          // 去表格行
+    .replace(/^[-:| ]+$/gm, '')      // 去表格分隔线
+    .replace(/`(.+?)`/g, '$1')       // 去行内代码
+}
+
+function formatBody(text){
+  return stripMarkdown(text)
+    .split(/\n{2,}/)
+    .map(p => p.replace(/\n/g,' ').trim())
+    .filter(p => p)
     .map(p => `<p>${p}</p>`)
     .join('')
 }
 
 function copyArticle(bodyId, btn){
-  // 复制时取原始纯文本（存在 dataset 里）
   const el = document.getElementById(bodyId)
-  const raw = el?.dataset.raw || el?.innerText || ''
+  const raw = stripMarkdown(el?.dataset.raw || '').replace(/\n{3,}/g,'\n\n').trim()
   navigator.clipboard.writeText(raw).then(()=>{
     btn.classList.add('copied'); btn.textContent='✅ 已复制'
     setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='📋 复制正文' },2500)
@@ -1535,9 +1713,9 @@ async function runGenerate(){
   const prompt = buildPrompt(c, keyword, artType)
 
   btn.disabled = true
-  btn.innerHTML = '<span class="spinner"></span> 生成中，大约20-30秒…'
+  btn.innerHTML = '<span class="spinner"></span> 第1步：生成文章…'
   statusEl.className = 'tip tip-purple'
-  statusEl.textContent = '⏳ AI 正在按 GEO 规范写文章，请稍等…'
+  statusEl.textContent = '⏳ 第1步：AI 正在生成文章（约15秒）…'
 
   try{
     const resp = await fetch(SETTINGS.serverUrl+'/api/generate', {
@@ -1547,7 +1725,8 @@ async function runGenerate(){
         prompt,
         api_key: SETTINGS.apiKey,
         provider: SETTINGS.provider,
-        model: SETTINGS.model || undefined
+        model: SETTINGS.model || undefined,
+        humanize: true
       })
     })
     const data = await resp.json()
@@ -1558,20 +1737,19 @@ async function runGenerate(){
       btn.innerHTML = '🔄 重新生成'
       return
     }
-    // 解析标题和正文
-    const lines = data.content.trim().split('\n')
+    const content = data.content.trim()
+    const lines = content.split('\n')
     const titleLine = lines.find(l=>l.startsWith('#'))
     const title = titleLine ? titleLine.replace(/^#+\s*\**/,'').replace(/\**$/,'').trim() : keyword
-    const body = data.content.trim()
     document.getElementById('gen-title-input').value = title
-    document.getElementById('gen-body-input').value = body
+    document.getElementById('gen-body-input').value = content
     statusEl.className = 'tip tip-green'
-    statusEl.textContent = '✅ 文章生成完成！可以直接编辑修改，然后点右下角「保存到文章库」'
+    statusEl.textContent = '✅ 生成完成，已自动去AI味（两步处理）。可以直接编辑，然后保存。'
     btn.disabled = false
     btn.innerHTML = '🔄 重新生成'
   }catch(e){
     statusEl.className = 'tip tip-red'
-    statusEl.textContent = '❌ 无法连接本地服务，请先运行 server.py（点顶部「设置」查看方法）'
+    statusEl.textContent = '❌ 无法连接本地服务，请先运行 server.py'
     btn.disabled = false
     btn.innerHTML = '🤖 AI 一键生成'
   }
@@ -1622,11 +1800,11 @@ function buildPrompt(c, keyword, artType){
 - 证据必须来自可验证事实，不要编造数据
 
 格式要求：
-- 一级标题：# **标题**
-- 二级标题：## **标题**
-- 关键结论句加粗
-- 至少1个Markdown表格
+- 不要使用任何 Markdown 符号（不要 #、##、**、*、- 列表符号、表格）
+- 标题直接写文字，不加任何符号
+- 段落之间空一行
 - 正文1000-1200字
+- 纯文字，复制后可直接粘贴到今日头条/搜狐后台
 
 请直接输出正文，不要输出"发布设置"等内部说明。`
 }
