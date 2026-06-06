@@ -140,6 +140,71 @@ class GEOHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers.get('Content-Length', 0))
         body = json.loads(self.rfile.read(length))
+
+        # 图片生成接口独立处理
+        if self.path == '/api/generate-image':
+            img_api_key = body.get('img_api_key', '').strip()
+            prompt = body.get('prompt', '')
+            if not prompt:
+                self._json(400, {'error': '缺少图片描述'})
+                return
+
+            # 没有 API Key → 用 Pollinations.ai（完全免费，无需配置）
+            if not img_api_key:
+                import urllib.parse, random
+                encoded = urllib.parse.quote(prompt)
+                seed = random.randint(1000, 9999)
+                url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=768&model=flux&nologo=true&seed={seed}"
+                self._json(200, {'url': url, 'source': 'pollinations'})
+                return
+
+            # 有 API Key → 用 SiliconFlow（免费模型 SDXL）
+            try:
+                import urllib.request as urlreq
+                # 尝试顺序：SDXL（免费）→ Kolors（免费）→ Pollinations 兜底
+                models_to_try = [
+                    'stabilityai/stable-diffusion-xl-base-1.0',
+                    'Kwai-Kolors/Kolors',
+                ]
+                last_error = ''
+                for model_name in models_to_try:
+                    try:
+                        req_data = json.dumps({
+                            'model': model_name,
+                            'prompt': prompt,
+                            'negative_prompt': 'text, watermark, logo, blurry, distorted, ugly',
+                            'image_size': '1024x768',
+                            'batch_size': 1,
+                            'num_inference_steps': 25,
+                            'guidance_scale': 7.5
+                        }).encode('utf-8')
+                        req = urlreq.Request(
+                            'https://api.siliconflow.cn/v1/images/generations',
+                            data=req_data,
+                            headers={
+                                'Authorization': f'Bearer {img_api_key}',
+                                'Content-Type': 'application/json'
+                            }
+                        )
+                        with urlreq.urlopen(req, timeout=60) as resp:
+                            result = json.loads(resp.read())
+                        if 'images' in result and result['images']:
+                            self._json(200, {'url': result['images'][0]['url'], 'source': 'siliconflow', 'model': model_name})
+                            return
+                        last_error = str(result)
+                    except Exception as e:
+                        last_error = str(e)
+                        continue
+                # 所有模型都失败 → Pollinations 兜底
+                import urllib.parse, random
+                encoded = urllib.parse.quote(prompt)
+                seed = random.randint(1000, 9999)
+                url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=768&model=flux&nologo=true&seed={seed}"
+                self._json(200, {'url': url, 'source': 'pollinations_fallback', 'note': last_error})
+            except Exception as e:
+                self._json(500, {'error': str(e)})
+            return
+
         api_key  = body.get('api_key', '').strip()
         provider = body.get('provider', 'deepseek')
         model    = body.get('model', '')

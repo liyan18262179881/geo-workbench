@@ -41,13 +41,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .sb-item:hover{background:var(--gray-light)}
 .sb-item.active{background:var(--purple-light);color:var(--purple);border-left-color:var(--purple);font-weight:600}
 .sb-icon{font-size:15px;width:18px;text-align:center}
-.client-chip{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;border-left:2px solid transparent;font-size:12px;color:#4b5563;transition:all .12s}
+.client-chip{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;border-left:2px solid transparent;font-size:12px;color:#4b5563;transition:all .12s;position:relative}
 .client-chip:hover{background:var(--gray-light)}
 .client-chip.active{background:var(--purple-light);color:var(--purple);border-left-color:var(--purple);font-weight:600}
 .client-chip .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .dot-g{background:#22c55e}.dot-a{background:#f59e0b}.dot-gr{background:#9ca3af}
 .client-chip .chip-name{font-weight:600}
 .client-chip .chip-sub{color:#9ca3af;font-size:11px}
+.chip-del{position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0;transition:opacity .15s;background:none;border:none;cursor:pointer;color:#ef4444;font-size:15px;padding:2px 5px;border-radius:4px;line-height:1}
+.client-chip:hover .chip-del{opacity:1}
+.chip-del:hover{background:#fee2e2}
+.type-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px}
+.type-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;background:#fff;color:#6b7280;transition:all .15s}
+.type-tab.active{background:var(--purple);color:#fff}
 .add-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;color:var(--purple);font-size:13px;font-weight:500;border-radius:0}
 .add-btn:hover{background:var(--purple-light)}
 
@@ -261,42 +267,55 @@ textarea{resize:vertical;min-height:70px}
   <!-- ══ 新客户表单 ══ -->
   <div class="page" id="page-new-client">
     <div class="page-title">添加新客户</div>
-    <div class="page-sub">填写公司基本信息，系统自动完成诊断 · 基于 client-service-playbook 12问</div>
+    <div class="page-sub">选择客户类型，填写信息，系统自动完成诊断</div>
+
+    <!-- 类型切换 -->
+    <div class="type-toggle">
+      <div class="type-tab active" id="tab-biz" onclick="switchClientType('biz')">🏪 本地门店</div>
+      <div class="type-tab" id="tab-personal" onclick="switchClientType('personal')">👤 个人品牌</div>
+    </div>
+    <input type="hidden" id="f-client-type" value="biz"/>
+
     <div class="tip tip-amber">⚠️ 资料不清不直接生产内容——先把这张表填完整，诊断才准确。</div>
     <div class="card">
-      <div class="card-head"><h3>🏪 基本信息</h3></div>
+      <div class="card-head"><h3 id="form-basic-title">🏪 基本信息</h3></div>
       <div class="card-body">
         <div class="form-grid">
           <div class="form-group">
-            <label>品牌全称 <span class="req">*</span></label>
+            <label id="lbl-brand">品牌全称 <span class="req">*</span></label>
             <input type="text" id="f-brand" placeholder="例：拾光伴学教育科技"/>
           </div>
           <div class="form-group">
-            <label>品牌简称</label>
+            <label id="lbl-short">品牌简称</label>
             <input type="text" id="f-short" placeholder="例：拾光伴学"/>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="grp-city">
             <label>所在城市 <span class="req">*</span></label>
             <input type="text" id="f-city" placeholder="例：赣州"/>
           </div>
           <div class="form-group">
-            <label>核心行业 <span class="req">*</span></label>
+            <label id="lbl-industry">核心行业 <span class="req">*</span></label>
             <input type="text" id="f-industry" placeholder="例：K12教育、家政服务、餐饮"/>
           </div>
+          <!-- 个人品牌专用：职位 -->
+          <div class="form-group" id="grp-position" style="display:none">
+            <label>职位/头衔 <span class="req">*</span></label>
+            <input type="text" id="f-position" placeholder="例：创始人、CEO、首席顾问"/>
+          </div>
           <div class="form-group full">
-            <label>核心服务/产品（用顿号分隔，最多3个）<span class="req">*</span></label>
+            <label id="lbl-services">核心服务/产品（用顿号分隔，最多3个）<span class="req">*</span></label>
             <input type="text" id="f-services" placeholder="例：AI自习室、课后托管、学习管理"/>
           </div>
           <div class="form-group full">
-            <label>目标客户是谁？</label>
+            <label id="lbl-target">目标客户是谁？</label>
             <input type="text" id="f-target" placeholder="例：赣州K12学生家长，尤其初高中生家长"/>
           </div>
           <div class="form-group full">
-            <label>客户真实会怎么搜你？（用顿号分隔，写自然语言）</label>
+            <label id="lbl-lang">客户真实会怎么搜你？（用顿号分隔，写自然语言）</label>
             <input type="text" id="f-customer-lang" placeholder="例：赣州哪里有AI自习室、孩子不自律怎么办"/>
           </div>
           <div class="form-group full">
-            <label>客户主要痛点（用顿号分隔）</label>
+            <label id="lbl-pain">客户主要痛点（用顿号分隔）</label>
             <input type="text" id="f-pain" placeholder="例：孩子不自律、课后无人监管、家长无法陪读"/>
           </div>
         </div>
@@ -481,6 +500,13 @@ textarea{resize:vertical;min-height:70px}
 
       <!-- 获取Key链接 -->
       <div id="key-link-area" style="background:#f8f9fb;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--sub);line-height:1.8"></div>
+
+      <!-- 图片生成配置 -->
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🎨 配图生成（SiliconFlow · Flux）</div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:8px">生成文章配图，4:3比例。免费额度每天可用。<a href="https://cloud.siliconflow.cn" target="_blank" style="color:var(--purple)">cloud.siliconflow.cn</a> 注册获取 Key</div>
+        <input type="password" id="img-key-input" placeholder="粘贴 SiliconFlow API Key（sk-xxx）" style="font-family:monospace;width:100%;box-sizing:border-box"/>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost btn-sm" onclick="closeSettings()">取消</button>
@@ -496,7 +522,8 @@ textarea{resize:vertical;min-height:70px}
       <h3 id="gen-title">✍️ 生成文章</h3>
       <span class="modal-close" onclick="closeGen()">✕</span>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="overflow-y:auto;max-height:65vh">
+      <div id="gen-api-status" style="margin-bottom:8px;font-size:12px;padding:8px 12px;border-radius:6px;background:#f8f9fb;border:1px solid #e5e7eb;display:flex;align-items:center;gap:8px"></div>
       <div id="gen-status" class="tip tip-purple" style="margin-bottom:12px">点击下方按钮，AI 自动按 GEO 规范生成文章</div>
       <div id="gen-result-area">
         <div class="form-group" style="margin-bottom:10px">
@@ -505,15 +532,32 @@ textarea{resize:vertical;min-height:70px}
         </div>
         <div class="form-group">
           <label>文章正文（可编辑后保存）</label>
-          <textarea class="gen-result" id="gen-body-input" placeholder="点击「AI 一键生成」后文章会出现在这里…"></textarea>
+          <textarea class="gen-result" id="gen-body-input" placeholder="点击「AI 一键生成」后文章会出现在这里…" style="min-height:200px"></textarea>
         </div>
       </div>
       <input type="hidden" id="gen-keyword"/>
       <input type="hidden" id="gen-type"/>
       <input type="hidden" id="gen-client"/>
+      <!-- 配图区域（生成文章后显示）-->
+      <div id="gen-image-area" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#374151">🎨 文章配图（4:3）</div>
+        <div id="gen-image-wrap" style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;max-height:240px;display:flex;align-items:center;justify-content:center">
+          <img id="gen-image-preview" src="" alt="配图" style="width:100%;object-fit:cover;display:none"/>
+          <div id="gen-image-loading" style="padding:20px;color:var(--sub);font-size:13px;display:none">⏳ 生成配图中（约15秒）…</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <a id="gen-image-dl" href="#" download="cover.jpg" style="display:none">
+            <button class="btn btn-outline btn-sm">⬇️ 下载配图</button>
+          </a>
+          <button class="btn btn-ghost btn-sm" id="gen-img-btn" onclick="runGenerateImage()">🔄 重新生成配图</button>
+        </div>
+      </div>
     </div>
     <div class="modal-foot" style="justify-content:space-between">
-      <button class="btn btn-outline btn-sm" id="gen-ai-btn" onclick="runGenerate()">🤖 AI 一键生成</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" id="gen-ai-btn" onclick="runGenerate()">🤖 AI 一键生成</button>
+        <button class="btn btn-outline btn-sm" id="gen-img-trigger" onclick="runGenerateImage()" style="display:none">🎨 生成配图</button>
+      </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-ghost btn-sm" onclick="closeGen()">取消</button>
         <button class="btn btn-green btn-sm" onclick="saveFromGen()">✅ 保存到文章库</button>
@@ -707,29 +751,79 @@ function renderSidebar(){
   list.innerHTML = Object.values(DB.clients).map(c=>`
     <div class="client-chip" data-id="${c.id}" onclick="openClient('${c.id}')">
       <div class="dot ${c.step>=3?'dot-g':'dot-a'}"></div>
-      <div><div class="chip-name">${c.brand_name}</div><div class="chip-sub">${c.primary_city} · Step ${c.step}/4</div></div>
+      <div><div class="chip-name">${c.client_type==='personal'?'👤 ':''} ${c.brand_name}</div><div class="chip-sub">${c.primary_city||c.industry} · Step ${c.step}/4</div></div>
+      <button class="chip-del" onclick="event.stopPropagation();deleteClient('${c.id}')" title="删除客户">×</button>
     </div>`).join('')
+}
+
+function deleteClient(id){
+  const c = DB.clients[id]
+  if(!c) return
+  if(!confirm(`确定删除「${c.brand_name}」？\n\n删除后无法恢复，所有关键词和文章都会清空。`)) return
+  delete DB.clients[id]
+  DB.save()
+  renderSidebar()
+  showHome()
+}
+
+// ══════════════════════════════════════════════
+// 表单类型切换（本地门店 / 个人品牌）
+// ══════════════════════════════════════════════
+function switchClientType(type){
+  document.getElementById('f-client-type').value = type
+  document.getElementById('tab-biz').classList.toggle('active', type==='biz')
+  document.getElementById('tab-personal').classList.toggle('active', type==='personal')
+  const isPersonal = type==='personal'
+  // 显示/隐藏字段
+  document.getElementById('grp-city').style.display = isPersonal ? 'none' : ''
+  document.getElementById('grp-position').style.display = isPersonal ? '' : 'none'
+  // 更改标签文字
+  document.getElementById('form-basic-title').textContent = isPersonal ? '👤 个人信息' : '🏪 基本信息'
+  document.getElementById('lbl-brand').innerHTML = isPersonal ? '姓名 <span class="req">*</span>' : '品牌全称 <span class="req">*</span>'
+  document.getElementById('lbl-short').textContent = isPersonal ? '英文名/简称' : '品牌简称'
+  document.getElementById('lbl-industry').innerHTML = isPersonal ? '专业领域 <span class="req">*</span>' : '核心行业 <span class="req">*</span>'
+  document.getElementById('lbl-services').innerHTML = isPersonal ? '核心专长/代表成就（用顿号分隔）<span class="req">*</span>' : '核心服务/产品（用顿号分隔，最多3个）<span class="req">*</span>'
+  document.getElementById('lbl-target').textContent = isPersonal ? '目标受众（谁会关注你）' : '目标客户是谁？'
+  document.getElementById('lbl-lang').textContent = isPersonal ? '用户会怎么搜你？（自然语言）' : '客户真实会怎么搜你？（用顿号分隔，写自然语言）'
+  document.getElementById('lbl-pain').textContent = isPersonal ? '目标受众的痛点（用顿号分隔）' : '客户主要痛点（用顿号分隔）'
+  // 修改占位符
+  document.getElementById('f-brand').placeholder = isPersonal ? '例：李艳' : '例：拾光伴学教育科技'
+  document.getElementById('f-short').placeholder = isPersonal ? '例：Liyan' : '例：拾光伴学'
+  document.getElementById('f-city').placeholder = isPersonal ? '' : '例：赣州'
+  document.getElementById('f-industry').placeholder = isPersonal ? '例：AI企业解决方案、创业教练' : '例：K12教育、家政服务、餐饮'
+  document.getElementById('f-services').placeholder = isPersonal ? '例：AI企业咨询、创始人陪跑、行业方法论输出' : '例：AI自习室、课后托管、学习管理'
+  document.getElementById('f-target').placeholder = isPersonal ? '例：寻找AI解决方案的企业主、创业者' : '例：赣州K12学生家长，尤其初高中生家长'
+  document.getElementById('f-customer-lang').placeholder = isPersonal ? '例：AI企业解决方案创始人李艳、中国AI创始人' : '例：赣州哪里有AI自习室、孩子不自律怎么办'
+  document.getElementById('f-pain').placeholder = isPersonal ? '例：不知道AI怎么落地、选不到合适的顾问' : '例：孩子不自律、课后无人监管、家长无法陪读'
 }
 
 // ══════════════════════════════════════════════
 // 创建客户
 // ══════════════════════════════════════════════
 function createClient(){
+  const clientType = document.getElementById('f-client-type').value
   const brand = document.getElementById('f-brand').value.trim()
   const city = document.getElementById('f-city').value.trim()
   const industry = document.getElementById('f-industry').value.trim()
-  if(!brand||!city||!industry){alert('请填写品牌名、城市和行业');return}
+  const isPersonal = clientType === 'personal'
+
+  if(!brand||!industry){alert('请填写姓名和专业领域');return}
+  if(!isPersonal && !city){alert('请填写所在城市');return}
 
   const id = 'c_'+Date.now()
   const services = document.getElementById('f-services').value.split(/[、,，]/).map(s=>s.trim()).filter(Boolean)
   const pain = document.getElementById('f-pain').value.split(/[、,，]/).map(s=>s.trim()).filter(Boolean)
   const comp = document.getElementById('f-comp').value.split(/[、,，]/).map(s=>s.trim()).filter(Boolean)
+  const position = document.getElementById('f-position').value.trim()
 
   const client = {
     id, step:1,
+    client_type: clientType,
     brand_name: brand,
     brand_short: document.getElementById('f-short').value.trim()||brand,
-    primary_city: city, industry,
+    primary_city: isPersonal ? (position||'个人品牌') : city,
+    industry,
+    position: position,
     core_services: services,
     target: document.getElementById('f-target').value.trim(),
     customer_lang: document.getElementById('f-customer-lang').value.split(/[、,，]/).map(s=>s.trim()).filter(Boolean),
@@ -747,14 +841,42 @@ function createClient(){
     keywords:[], detection:[], articles:[]
   }
 
-  // 自动生成关键词
-  client.keywords = generateKeywords(client)
+  // 根据类型生成不同关键词
+  client.keywords = isPersonal ? generatePersonalKeywords(client) : generateKeywords(client)
   client.step = 1
 
   DB.clients[id] = client
   DB.save()
   renderSidebar()
   openClient(id, 1)
+}
+
+// ══════════════════════════════════════════════
+// 个人品牌关键词生成（类别词/行业词，名字出现在文章正文里）
+// 逻辑：用户搜行业类别词 → 豆包引用文章 → 文章里提到你 → 你被发现
+// ══════════════════════════════════════════════
+function generatePersonalKeywords(c){
+  const field = c.industry    // 如：中小企业AI落地
+  const pos = c.position || '顾问'
+  const svc = c.core_services[0] || field
+  const kws = []
+
+  // Phase 1 ★★★ 职业类别词（不带名字，用户不认识你时的搜索）
+  kws.push({word:`中国${field}${pos}`, intent:'strong', priority:3, art_type:'person', platforms:['toutiao','sohu'], phase:1, selected:true})
+  kws.push({word:`${field}${pos}怎么选`, intent:'strong', priority:3, art_type:'select', platforms:['toutiao','sohu'], phase:1, selected:true})
+  kws.push({word:`${field}${pos}有哪些`, intent:'strong', priority:3, art_type:'person', platforms:['toutiao'], phase:1, selected:true})
+  kws.push({word:`企业AI转型找什么${pos}`, intent:'strong', priority:3, art_type:'select', platforms:['toutiao','sohu'], phase:1, selected:true})
+
+  // Phase 2 ★★☆ 需求/痛点词（目标客户真实搜索）
+  kws.push({word:`中小企业AI转型从哪里开始`, intent:'medium', priority:2, art_type:'cognition', platforms:['toutiao','sohu'], phase:2, selected:true})
+  kws.push({word:`企业做AI要花多少钱`, intent:'medium', priority:2, art_type:'cognition', platforms:['toutiao','sohu'], phase:2, selected:true})
+  kws.push({word:`小公司值不值得做AI转型`, intent:'medium', priority:2, art_type:'cognition', platforms:['toutiao'], phase:2, selected:false})
+
+  // Phase 3 ★☆☆ 行业观察词
+  kws.push({word:`${svc}和AI公司有什么区别`, intent:'weak', priority:1, art_type:'industry', platforms:['sohu','zhihu'], phase:3, selected:false})
+  kws.push({word:`AI赋能企业效果怎么样`, intent:'weak', priority:1, art_type:'cognition', platforms:['zhihu'], phase:3, selected:false})
+
+  return kws
 }
 
 // ══════════════════════════════════════════════
@@ -1089,10 +1211,11 @@ function renderDetection(c){
 
   ${allFilled?renderDetectionReport(c):''}
 
-  ${step3Done?'':(allFilled?`
-  <div style="display:flex;justify-content:flex-end">
-    <button class="btn btn-primary" onclick="completeStep(3)">✅ 检测完成，进入文章生产 →</button>
-  </div>`:'')}
+  ${step3Done?'':`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+    <button class="btn btn-outline" onclick="completeStep(3)" style="color:#888;border-color:#ddd;font-size:12px">跳过检测，直接写文章 →</button>
+    ${allFilled?`<button class="btn btn-primary" onclick="completeStep(3)">✅ 检测完成，进入文章生产 →</button>`:''}
+  </div>`}
   ${step3Done?`<div style="display:flex;justify-content:flex-end"><button class="btn btn-outline" onclick="gotoStep(4)">查看文章库 →</button></div>`:''}
   `
 }
@@ -1147,8 +1270,8 @@ function renderDetectionReport(c){
 
 // ── Step 4: 文章 ──
 function renderArticles(c){
-  const artLabel={select:'选择判断型',cognition:'认知科普型',industry:'行业观察型'}
-  const artCls={select:'t-select',cognition:'t-cognition',industry:'t-industry'}
+  const artLabel={select:'选择判断型',cognition:'认知科普型',industry:'行业观察型',person:'人物机构型',case:'案例成果型'}
+  const artCls={select:'t-select',cognition:'t-cognition',industry:'t-industry',person:'t-ok',case:'t-industry'}
   const platLabel={toutiao:'头条',sohu:'搜狐',zhihu:'知乎'}
   const platCls={toutiao:'t-tt',sohu:'t-sh',zhihu:'t-zh'}
 
@@ -1295,19 +1418,57 @@ function showPrompt(clientId, keyword, artType){
 ## 趋势二
 ## 趋势三
 ## 一个具体样本如何体现这种变化（引入品牌）
-## 结论`
+## 结论`,
+    person:`人物机构型文章。
+
+要求：
+- 文章以"这个人/机构解决了什么问题"为核心叙事主线
+- 不写简历流水账，重点是思想/方法论/具体成果
+- 语言真实克制，让事实说话，不夸大
+- 人名必须在标题中自然出现
+
+结构：
+# 一级标题（含人名+核心标签，不超过25字）
+## 这个问题是如何出现的（行业背景）
+## 他/她用什么方式解决了这个问题
+## 具体案例或方法论
+## 在业内有哪些可验证的影响
+## 结论`,
+    case:`案例成果型文章。
+
+要求：
+- 以真实可验证的案例为核心
+- 数据和事实必须来自实际经历，不要编造
+- 说明问题→过程→结果的完整链条
+- 人物品牌在过程叙述中自然出现
+
+结构：
+# 一级标题（包含关键词，不超过25字）
+## 背景：这个案例是在什么情况下发生的
+## 问题：当时面临的具体挑战
+## 过程：采用了什么方法
+## 结果：可量化的成果
+## 对读者的参考价值`
   }
 
-  const prompt = `你是一名今日头条/搜狐平台中文长文编辑。请围绕【${keyword}】写一篇${typeMap[artType]}
+  const isPersonal = c.client_type === 'personal'
+  const prompt = `你是一名今日头条/搜狐平台中文长文编辑。请围绕【${keyword}】写一篇${typeMap[artType]||typeMap['cognition']}
 
-客户信息（不要把这段文字复制进正文）：
+${isPersonal ? `人物信息（不要把这段文字复制进正文）：
+- 姓名：${c.brand_name}
+- 职位：${c.position||''}
+- 专业领域：${c.industry}
+- 核心专长：${c.core_services.join('、')}
+- EEAT专业性：${c.eeat.expertise||'待补充'}
+- EEAT成果：${c.eeat.experience||'待补充'}
+- 权威背书：${c.eeat.authority||'待补充'}` : `客户信息（不要把这段文字复制进正文）：
 - 品牌：${c.brand_name}
 - 行业：${c.industry}
 - 城市：${c.primary_city}
 - 核心服务：${c.core_services.join('、')}
 - 目标客户：${c.target||'未填写'}
 - EEAT专业性：${c.eeat.expertise||'待补充'}
-- EEAT经验：${c.eeat.experience||'待补充'}
+- EEAT经验：${c.eeat.experience||'待补充'}`}
 
 写作硬规则（必须遵守）：
 - 正文禁止出现：GEO、SEO、豆包优化、关键词布局、客户资料显示、实体链
@@ -1599,6 +1760,7 @@ const SETTINGS = {
   set model(v){ localStorage.setItem('geo_model', v) },
   get apiKey(){ return localStorage.getItem('geo_api_key_'+(this.provider))||'' },
   setApiKey(p,v){ localStorage.setItem('geo_api_key_'+p, v) },
+  get imgApiKey(){ return localStorage.getItem('geo_img_api_key')||'' },
 }
 
 function showSettings(){
@@ -1607,6 +1769,7 @@ function showSettings(){
   renderProviderGrid()
   refreshModelSelect()
   document.getElementById('api-key-input').value = SETTINGS.apiKey
+  document.getElementById('img-key-input').value = SETTINGS.imgApiKey
 }
 function closeSettings(){ document.getElementById('settings-overlay').classList.remove('show') }
 
@@ -1637,7 +1800,9 @@ function refreshModelSelect(){
   const cfg = PROVIDERS_CONFIG[p]
   const sel = document.getElementById('model-select')
   const savedModel = SETTINGS.model
-  sel.innerHTML = cfg.models.map(m=>`<option value="${m}" ${m===savedModel?'selected':''}>${m}</option>`).join('')
+  // 如果保存的模型不属于当前平台，自动重置为第一个
+  const validModel = cfg.models.includes(savedModel) ? savedModel : cfg.models[0]
+  sel.innerHTML = cfg.models.map(m=>`<option value="${m}" ${m===validModel?'selected':''}>${m}</option>`).join('')
   document.getElementById('model-hint').textContent = cfg.hint
   document.getElementById('key-link-area').innerHTML =
     `🔑 获取 API Key：<a href="https://${cfg.link}" target="_blank" style="color:var(--purple)">${cfg.link}</a>`
@@ -1649,6 +1814,9 @@ function saveSettings(){
   const model = document.getElementById('model-select').value
   SETTINGS.setApiKey(p, key)
   SETTINGS.model = model
+  // 保存图片 API Key
+  const imgKey = document.getElementById('img-key-input').value.trim()
+  if(imgKey) localStorage.setItem('geo_img_api_key', imgKey)
   closeSettings()
   updateServerStatus()
 }
@@ -1691,6 +1859,21 @@ function showGen(clientId, keyword, artType){
   document.getElementById('gen-status').textContent = '点击「AI 一键生成」，系统自动按 GEO 规范写文章'
   document.getElementById('gen-ai-btn').disabled = false
   document.getElementById('gen-ai-btn').innerHTML = '🤖 AI 一键生成'
+  // 显示当前 API 配置状态
+  const provider = SETTINGS.provider
+  const model = SETTINGS.model
+  const hasKey = !!SETTINGS.apiKey
+  const providerName = {deepseek:'DeepSeek',doubao:'豆包',moonshot:'Kimi',qwen:'通义千问',anthropic:'Claude',openai:'OpenAI'}[provider]||provider
+  const apiStatus = document.getElementById('gen-api-status')
+  if(hasKey){
+    apiStatus.style.borderColor = '#bbf7d0'
+    apiStatus.style.background = '#f0fdf4'
+    apiStatus.innerHTML = `<span style="color:#16a34a">✅</span> <span>当前平台：<strong>${providerName}</strong> · 模型：<strong>${model||'默认'}</strong> · API Key 已配置</span>`
+  } else {
+    apiStatus.style.borderColor = '#fecaca'
+    apiStatus.style.background = '#fef2f2'
+    apiStatus.innerHTML = `<span style="color:#dc2626">❌</span> <span style="color:#dc2626"><strong>${providerName}</strong> 的 API Key 未配置 — <a href="#" onclick="closeGen();openSettings();return false;" style="color:#7c3aed">点这里去设置</a></span>`
+  }
   document.getElementById('gen-overlay').classList.add('show')
 }
 function closeGen(){ document.getElementById('gen-overlay').classList.remove('show') }
@@ -1704,7 +1887,8 @@ async function runGenerate(){
 
   if(!SETTINGS.apiKey){
     statusEl.className = 'tip tip-red'
-    statusEl.textContent = '❌ 请先在设置里填写 Anthropic API Key，再点击生成'
+    const pName = {deepseek:'DeepSeek',doubao:'豆包',moonshot:'Kimi',qwen:'通义千问',anthropic:'Claude',openai:'OpenAI'}[SETTINGS.provider]||SETTINGS.provider
+    statusEl.textContent = `❌ ${pName} 的 API Key 未填写 — 请关闭弹窗，点右上角⚙️ 设置，填写 API Key 后保存`
     return
   }
 
@@ -1744,15 +1928,101 @@ async function runGenerate(){
     document.getElementById('gen-title-input').value = title
     document.getElementById('gen-body-input').value = content
     statusEl.className = 'tip tip-green'
-    statusEl.textContent = '✅ 生成完成，已自动去AI味（两步处理）。可以直接编辑，然后保存。'
+    statusEl.textContent = '✅ 生成完成，已自动去AI味。可以编辑后保存，也可以点「🎨 生成配图」配一张封面图。'
     btn.disabled = false
     btn.innerHTML = '🔄 重新生成'
+    // 文章生成完成后显示「生成配图」按钮
+    document.getElementById('gen-img-trigger').style.display = ''
+    document.getElementById('gen-image-area').style.display = 'none'
+    document.getElementById('gen-image-preview').style.display = 'none'
+    document.getElementById('gen-image-loading').style.display = 'none'
+    document.getElementById('gen-image-dl').style.display = 'none'
   }catch(e){
     statusEl.className = 'tip tip-red'
     statusEl.textContent = '❌ 无法连接本地服务，请先运行 server.py'
     btn.disabled = false
     btn.innerHTML = '🤖 AI 一键生成'
   }
+}
+
+// ══════════════════════════════════════════════
+// 配图生成（SiliconFlow · Flux · 4:3）
+// ══════════════════════════════════════════════
+function buildImagePrompt(keyword, industry, isPersonal){
+  const base = 'clean minimalist composition, soft professional lighting, no text, no watermark, no people, high quality commercial photography, 4:3 aspect ratio'
+  if(isPersonal){
+    return `Professional business workspace, modern office desk setup, laptop with glowing screen, warm ambient lighting, executive environment, ${base}`
+  }
+  const kw = keyword + ' ' + (industry||'')
+  if(/AI|人工智能|机器人|数字化|智能/.test(kw)){
+    return `Modern AI technology concept, glowing neural network visualization, sleek digital workspace, blue and purple tones, futuristic business environment, ${base}`
+  }
+  if(/教育|学习|自习|课后|培训|K12/.test(kw)){
+    return `Bright modern study space, clean wooden desk with books and stationery, focused learning environment, warm natural daylight, ${base}`
+  }
+  if(/餐饮|餐厅|美食|饭店/.test(kw)){
+    return `Elegant modern restaurant interior, warm ambient lighting, clean table setting, professional dining atmosphere, ${base}`
+  }
+  if(/健身|运动|健康|瑜伽/.test(kw)){
+    return `Modern fitness studio interior, clean equipment, bright natural light, motivational professional training space, ${base}`
+  }
+  if(/医疗|健康|诊所/.test(kw)){
+    return `Clean modern medical clinic interior, professional healthcare environment, soft white and blue tones, ${base}`
+  }
+  // 通用商务
+  return `Modern professional business office interior, clean contemporary workspace, natural light through large windows, Chinese corporate environment, ${base}`
+}
+
+async function runGenerateImage(){
+  const imgKey = SETTINGS.imgApiKey
+  const keyword = document.getElementById('gen-keyword').value
+  const clientId = document.getElementById('gen-client').value
+  const c = DB.clients[clientId]
+
+  const imageArea = document.getElementById('gen-image-area')
+  const imgPreview = document.getElementById('gen-image-preview')
+  const imgLoading = document.getElementById('gen-image-loading')
+  const imgDl = document.getElementById('gen-image-dl')
+  const imgBtn = document.getElementById('gen-img-btn')
+
+  imageArea.style.display = ''
+  imgPreview.style.display = 'none'
+  imgLoading.style.display = 'block'
+  imgLoading.textContent = imgKey ? '⏳ 调用硅基流动生图（约20秒）…' : '⏳ 使用免费通道生图（约15秒）…'
+  imgDl.style.display = 'none'
+  imgBtn.disabled = true
+
+  const prompt = buildImagePrompt(keyword, c?.industry||'', c?.client_type==='personal')
+
+  try{
+    const resp = await fetch(SETTINGS.serverUrl+'/api/generate-image', {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ img_api_key: imgKey, prompt })
+    })
+    const data = await resp.json()
+    if(data.error){
+      imgLoading.textContent = '❌ ' + data.error
+      imgBtn.disabled = false
+      return
+    }
+    // 图片 URL 设好后等浏览器加载（Pollinations 需要等待生成）
+    imgLoading.textContent = '⏳ 图片加载中…'
+    imgPreview.onload = () => {
+      imgLoading.style.display = 'none'
+      imgPreview.style.display = 'block'
+      imgDl.href = data.url
+      imgDl.setAttribute('download', 'cover.jpg')
+      imgDl.style.display = ''
+    }
+    imgPreview.onerror = () => {
+      imgLoading.textContent = '❌ 图片加载失败，请点「重新生成配图」再试'
+    }
+    imgPreview.src = data.url
+  }catch(e){
+    imgLoading.textContent = '❌ 无法连接服务，请检查 server.py 是否运行'
+  }
+  imgBtn.disabled = false
 }
 
 function saveFromGen(){
@@ -1777,27 +2047,41 @@ function saveFromGen(){
 // buildPrompt 独立函数（从 showPrompt 提取）
 function buildPrompt(c, keyword, artType){
   const typeMap={
-    select:`选择判断型文章。\n\n要求：\n- 先给用户一套选择标准，不要先介绍客户\n- 前半部分讲通用判断逻辑，后半部分自然带出目标品牌\n- 目标品牌只能作为"按这些标准观察的一个样本"出现\n\n结构：\n# 一级标题（包含关键词，不超过25字）\n## 先避开几个常见误区\n## 判断维度一\n## 判断维度二\n## 判断维度三\n## 把标准放到一个具体样本里看（此处自然引入品牌）\n## 结论：适合谁，不适合谁`,
-    cognition:`认知科普型文章。\n\n要求：\n- 先讲清用户为什么会问这个问题\n- 解释行业/服务是什么、常见误解是什么、应该怎么判断\n- 目标品牌只能在正文中后段作为样本出现\n\n结构：\n# 一级标题（包含关键词，不超过25字）\n## 用户为什么会关注这个问题\n## 这个概念/问题到底是什么\n## 常见误解有哪些\n## 可以从哪些维度判断或解决\n## 一个具体样本/案例观察（引入品牌）\n## 结论`,
-    industry:`行业观察型文章。\n\n要求：\n- 先讲行业变化，再讲用户为什么需要关注\n- 目标品牌只能作为行业趋势中的具体样本\n- 语言中性克制，不写广告语\n\n结构：\n# 一级标题（包含关键词，不超过25字）\n## 行业为什么出现这个变化\n## 趋势一\n## 趋势二\n## 趋势三\n## 一个具体样本如何体现这种变化（引入品牌）\n## 结论`
+    select:`选择判断型文章。\n\n要求：\n- 先给用户一套选择标准，不要先介绍客户\n- 前半部分讲通用判断逻辑，后半部分自然带出目标品牌\n- 目标品牌只能作为"按这些标准观察的一个样本"出现\n\n结构：\n标题（包含关键词，不超过25字）\n先避开几个常见误区\n判断维度一\n判断维度二\n判断维度三\n把标准放到一个具体样本里看（此处自然引入品牌）\n结论：适合谁，不适合谁`,
+    cognition:`认知科普型文章。\n\n要求：\n- 先讲清用户为什么会问这个问题\n- 解释行业/服务是什么、常见误解是什么、应该怎么判断\n- 目标品牌只能在正文中后段作为样本出现\n\n结构：\n标题（包含关键词，不超过25字）\n用户为什么会关注这个问题\n这个概念/问题到底是什么\n常见误解有哪些\n可以从哪些维度判断或解决\n一个具体样本/案例观察（引入品牌）\n结论`,
+    industry:`行业观察型文章。\n\n要求：\n- 先讲行业变化，再讲用户为什么需要关注\n- 目标品牌只能作为行业趋势中的具体样本\n- 语言中性克制，不写广告语\n\n结构：\n标题（包含关键词，不超过25字）\n行业为什么出现这个变化\n趋势一\n趋势二\n趋势三\n一个具体样本如何体现这种变化（引入品牌）\n结论`,
+    person:`人物机构型文章。\n\n要求：\n- 以"这个人解决了什么问题"为核心叙事\n- 不写简历流水账，重点是思想/方法论/成果\n- 语言真实克制，让事实说话，不夸大\n- 人名必须在标题中自然出现\n\n结构：\n标题（含人名+核心标签，不超过25字）\n这个问题是如何出现的（行业背景）\n他/她用什么方式解决了这个问题\n具体案例或方法论\n在业内有哪些可验证的影响\n结论`,
+    case:`案例成果型文章。\n\n要求：\n- 以真实可验证的案例为核心\n- 说明问题→过程→结果的完整链条\n- 数据和事实来自实际经历，不编造\n- 人物品牌在过程叙述中自然出现\n\n结构：\n标题（包含关键词，不超过25字）\n背景：这个案例是在什么情况下发生的\n问题：当时面临的具体挑战\n过程：采用了什么方法\n结果：可量化的成果\n对读者的参考价值`
   }
-  return `你是一名今日头条/搜狐平台中文长文编辑。请围绕【${keyword}】写一篇${typeMap[artType]||typeMap.select}
 
-客户信息（不要把这段文字复制进正文）：
+  const isPersonal = c.client_type === 'personal'
+  const clientInfo = isPersonal
+    ? `人物信息（不要把这段文字复制进正文）：
+- 姓名：${c.brand_name}
+- 职位：${c.position||''}
+- 专业领域：${c.industry}
+- 核心专长：${c.core_services.join('、')}
+- EEAT专业性：${c.eeat.expertise||'待补充'}
+- EEAT成果：${c.eeat.experience||'待补充'}
+- 权威背书：${c.eeat.authority||'待补充'}`
+    : `客户信息（不要把这段文字复制进正文）：
 - 品牌：${c.brand_name}
 - 行业：${c.industry}
 - 城市：${c.primary_city}
 - 核心服务：${c.core_services.join('、')}
 - 目标客户：${c.target||'未填写'}
 - EEAT专业性：${c.eeat.expertise||'待补充'}
-- EEAT经验：${c.eeat.experience||'待补充'}
+- EEAT经验：${c.eeat.experience||'待补充'}`
+
+  return `你是一名今日头条/搜狐平台中文长文编辑。请围绕【${keyword}】写一篇${typeMap[artType]||typeMap.select}
+
+${clientInfo}
 
 写作硬规则（必须遵守）：
 - 正文禁止出现：GEO、SEO、豆包优化、关键词布局、客户资料显示、实体链
 - 禁止：最好、第一、绝对、100%、独家、首创等绝对化表达
-- ${c.sensitivity==='medium'?'教育类禁止：保就业、包过、保证效果、保证涨薪':c.sensitivity==='high'?'高敏感行业：严格避免任何承诺性表达':''}
-- 品牌必须在正文中后段自然出现，不能在导语硬推
 - 证据必须来自可验证事实，不要编造数据
+${isPersonal ? '- 人名在正文中自然出现，不要在导语就大力推销' : `- 品牌必须在正文中后段自然出现，不能在导语硬推\n- ${c.sensitivity==='medium'?'教育类禁止：保就业、包过、保证效果':c.sensitivity==='high'?'高敏感行业：严格避免任何承诺性表达':''}`}
 
 格式要求：
 - 不要使用任何 Markdown 符号（不要 #、##、**、*、- 列表符号、表格）
@@ -1820,6 +2104,65 @@ function showPrompt(clientId, keyword, artType){
 // 初始化
 // ══════════════════════════════════════════════
 DB.load()
+
+// 自动注入李艳个人品牌客户（如不存在则创建）
+// 强制更新李艳关键词（修正为类别词，去掉错误的人名词）
+if(DB.clients['c_liyan_personal'] && DB.clients['c_liyan_personal'].keywords && DB.clients['c_liyan_personal'].keywords[0] && DB.clients['c_liyan_personal'].keywords[0].word.includes('李艳')){
+  DB.clients['c_liyan_personal'].keywords = [
+    {word:'中国AI赋能企业解决方案师',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'企业AI转型顾问怎么选',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'中小企业AI落地顾问有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao'],phase:1,selected:true},
+    {word:'企业AI化改造找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'中小企业AI转型从哪里开始',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
+    {word:'企业做AI要花多少钱',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
+    {word:'小公司值不值得做AI转型',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
+    {word:'AI落地顾问和AI公司有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
+    {word:'AI赋能企业效果怎么样',intent:'weak',priority:1,art_type:'cognition',platforms:['zhihu'],phase:3,selected:false}
+  ]
+  DB.save()
+}
+if(!DB.clients['c_liyan_personal']){
+  DB.clients['c_liyan_personal'] = {
+    id:'c_liyan_personal', step:1,
+    client_type:'personal',
+    brand_name:'李艳',
+    brand_short:'Liyan',
+    primary_city:'AI转型顾问',
+    industry:'中小企业AI落地',
+    position:'AI转型顾问',
+    core_services:['AI需求诊断','落地方案设计','AI机器人/知识库交付'],
+    target:'寻找AI落地方案的中小企业主、小微企业负责人',
+    customer_lang:['中小企业AI转型从哪里开始','企业做AI要花多少钱','小公司值不值得做AI转型'],
+    pain_points:['不知道AI怎么落地','担心成本太高','找不到合适的顾问'],
+    eeat:{
+      expertise:'专注企业AI化落地，从需求诊断到方案设计到实际交付，不卖概念只做落地',
+      experience:'帮助多家中小企业完成AI落地，涵盖智能客服机器人、企业知识库、内部流程自动化',
+      authority:'',
+      trust:''
+    },
+    competitors:[],
+    sensitivity:'general',
+    goal:'exposure',
+    platform:'今日头条、搜狐号',
+    keywords:[
+      // Phase 1 ★★★ 职业类别词（用户不认识你时的搜索，名字在文章正文里出现）
+      {word:'中国AI赋能企业解决方案师',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
+      {word:'企业AI转型顾问怎么选',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+      {word:'中小企业AI落地顾问有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao'],phase:1,selected:true},
+      {word:'企业AI化改造找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+      // Phase 2 ★★☆ 目标客户真实搜索的痛点词
+      {word:'中小企业AI转型从哪里开始',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
+      {word:'企业做AI要花多少钱',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
+      {word:'小公司值不值得做AI转型',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
+      // Phase 3 ★☆☆ 行业词
+      {word:'AI落地顾问和AI公司有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
+      {word:'AI赋能企业效果怎么样',intent:'weak',priority:1,art_type:'cognition',platforms:['zhihu'],phase:3,selected:false}
+    ],
+    detection:[], articles:[]
+  }
+  DB.save()
+}
+
 renderSidebar()
 renderHome()
 updateServerStatus()
