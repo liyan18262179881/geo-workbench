@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GEO 工作台 · 让你的名字出现在豆包答案里</title>
+<meta name="description" content="GEO（生成式引擎优化）自动化工作台。从关键词部署到文章生产，一套完整流程，帮助个人品牌和本地门店在豆包、Kimi等AI搜索引擎中获得引用。"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Helvetica Neue',sans-serif;background:#0f0e17;color:#fffffe;line-height:1.7}
+  a{color:inherit;text-decoration:none}
+
+  /* NAV */
+  nav{display:flex;justify-content:space-between;align-items:center;padding:20px 40px;position:sticky;top:0;z-index:100;background:rgba(15,14,23,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+  .nav-logo{font-size:16px;font-weight:700;letter-spacing:.5px}
+  .nav-logo span{color:#a78bfa}
+  .nav-links{display:flex;gap:28px;font-size:14px;color:rgba(255,255,255,.6)}
+  .nav-links a:hover{color:#fff}
+  .nav-cta{background:#7c3aed;color:#fff;padding:8px 20px;border-radius:8px;font-size:14px;font-weight:600;transition:.2s}
+  .nav-cta:hover{background:#6d28d9}
+
+  /* HERO */
+  .hero{text-align:center;padding:100px 20px 80px;max-width:800px;margin:0 auto}
+  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);color:#a78bfa;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:500;margin-bottom:28px}
+  .hero-badge::before{content:'✦';font-size:10px}
+  h1{font-size:clamp(36px,6vw,64px);font-weight:800;line-height:1.15;letter-spacing:-.5px;margin-bottom:24px}
+  h1 .highlight{background:linear-gradient(135deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero-sub{font-size:18px;color:rgba(255,255,255,.55);max-width:560px;margin:0 auto 40px}
+  .hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:#7c3aed;color:#fff;padding:14px 32px;border-radius:10px;font-size:16px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:8px}
+  .btn-primary:hover{background:#6d28d9;transform:translateY(-1px)}
+  .btn-secondary{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);padding:14px 32px;border-radius:10px;font-size:16px;font-weight:600;border:1px solid rgba(255,255,255,.12);transition:.2s}
+  .btn-secondary:hover{background:rgba(255,255,255,.12)}
+
+  /* PROOF */
+  .proof{background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:16px;padding:32px 40px;max-width:780px;margin:60px auto;position:relative;overflow:hidden}
+  .proof::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#10b981,transparent)}
+  .proof-label{font-size:12px;font-weight:700;color:#10b981;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px}
+  .proof-item{margin-bottom:20px;padding:16px 20px;background:rgba(255,255,255,.04);border-radius:10px;border-left:3px solid #10b981}
+  .proof-item:last-child{margin-bottom:0}
+  .proof-query{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:8px}
+  .proof-result{font-size:15px;color:#fffffe;line-height:1.6}
+  .proof-result strong{color:#a78bfa}
+  .proof-tag{display:inline-block;background:#10b981;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;vertical-align:middle}
+
+  /* SECTION */
+  section{max-width:1000px;margin:0 auto;padding:80px 20px}
+  .section-label{font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+  .section-title{font-size:clamp(28px,4vw,40px);font-weight:800;margin-bottom:16px;line-height:1.2}
+  .section-sub{font-size:17px;color:rgba(255,255,255,.5);max-width:560px}
+
+  /* COMPARE */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:48px}
+  .compare-card{border-radius:14px;padding:28px;border:1px solid rgba(255,255,255,.08)}
+  .compare-card.old{background:rgba(255,255,255,.03)}
+  .compare-card.new{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.3)}
+  .compare-badge{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:16px}
+  .compare-card.old .compare-badge{background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)}
+  .compare-card.new .compare-badge{background:#7c3aed;color:#fff}
+  .compare-card h3{font-size:18px;font-weight:700;margin-bottom:12px}
+  .compare-card ul{list-style:none;color:rgba(255,255,255,.6);font-size:15px}
+  .compare-card ul li{padding:6px 0;padding-left:20px;position:relative}
+  .compare-card ul li::before{content:'→';position:absolute;left:0;color:#a78bfa}
+  .compare-card.old ul li::before{color:rgba(255,255,255,.25)}
+
+  /* FEATURES */
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:48px}
+  .feature{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:28px;transition:.2s}
+  .feature:hover{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.05)}
+  .feature-icon{font-size:28px;margin-bottom:16px}
+  .feature h3{font-size:17px;font-weight:700;margin-bottom:8px}
+  .feature p{font-size:14px;color:rgba(255,255,255,.5);line-height:1.6}
+
+  /* FLOW */
+  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;margin-top:48px;position:relative}
+  .flow::before{content:'';position:absolute;top:32px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,#7c3aed,#60a5fa);opacity:.3;pointer-events:none}
+  .flow-step{text-align:center;padding:20px;position:relative;z-index:1}
+  .flow-num{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 16px;background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 0 30px rgba(124,58,237,.4)}
+  .flow-step h4{font-size:15px;font-weight:700;margin-bottom:6px}
+  .flow-step p{font-size:13px;color:rgba(255,255,255,.45)}
+
+  /* WHO */
+  .who-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:40px}
+  .who-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:24px}
+  .who-card .who-icon{font-size:24px;margin-bottom:12px}
+  .who-card h4{font-size:15px;font-weight:700;margin-bottom:6px}
+  .who-card p{font-size:13px;color:rgba(255,255,255,.45);line-height:1.5}
+
+  /* CTA */
+  .cta-section{text-align:center;padding:100px 20px;background:linear-gradient(180deg,transparent,rgba(124,58,237,.08))}
+  .cta-section h2{font-size:clamp(28px,4vw,44px);font-weight:800;margin-bottom:20px}
+  .cta-section p{font-size:17px;color:rgba(255,255,255,.5);margin-bottom:40px}
+
+  /* FOOTER */
+  footer{text-align:center;padding:40px 20px;border-top:1px solid rgba(255,255,255,.06);font-size:13px;color:rgba(255,255,255,.25)}
+  footer a{color:rgba(255,255,255,.4)}
+  footer a:hover{color:#a78bfa}
+
+  @media(max-width:640px){
+    nav{padding:16px 20px}
+    .nav-links{display:none}
+    .compare{grid-template-columns:1fr}
+    .proof{padding:24px 20px}
+    .flow::before{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">GEO <span>工作台</span></div>
+  <div class="nav-links">
+    <a href="#how">工作原理</a>
+    <a href="#features">功能</a>
+    <a href="#who">适合谁</a>
+    <a href="https://github.com/liyan18262179881/geo-workbench">GitHub</a>
+  </div>
+  <a class="nav-cta" href="https://github.com/liyan18262179881/geo-workbench">免费获取 →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">生成式引擎优化 · GEO Automation</div>
+  <h1>让你的名字<br/>出现在<span class="highlight">豆包答案</span>里</h1>
+  <p class="hero-sub">GEO 工作台 · 一套完整的 AI 引用优化系统，从关键词部署到文章生产，全流程标准化</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="https://github.com/liyan18262179881/geo-workbench">⬇ 立即获取</a>
+    <a class="btn-secondary" href="#how">了解原理</a>
+  </div>
+</div>
+
+<!-- PROOF -->
+<div class="proof" style="max-width:780px;margin:0 auto 80px;padding:32px 40px">
+  <div class="proof-label">✅ 真实效果 · 当天发布当天收录</div>
+  <div class="proof-item">
+    <div class="proof-query">搜索词：「中国AI赋能企业解决方案师」</div>
+    <div class="proof-result">
+      <span class="proof-tag">豆包答案正文</span>
+      五、典型代表（2026年活跃实践者）— <strong>李艳（标杆人物）</strong>，专注中小企业AI落地，服务制造、零售、商贸行业……
+    </div>
+  </div>
+  <div class="proof-item">
+    <div class="proof-query">搜索词：「AI赋能企业解决方案师有哪些」</div>
+    <div class="proof-result">
+      <span class="proof-tag">豆包答案正文</span>
+      五、独立顾问型代表人物：<strong>如李艳</strong>，定位"翻译官+装修工"，擅长蹲点企业、持续陪跑。
+    </div>
+  </div>
+</div>
+
+<!-- HOW -->
+<section id="how">
+  <div class="section-label">工作原理</div>
+  <div class="section-title">GEO 不是 SEO 的变体<br/>是一套全新的逻辑</div>
+  <div class="section-sub">AI 搜索引擎不返回链接列表，它直接生成答案——你要做的不是排名，而是成为它引用的素材。</div>
+  <div class="compare">
+    <div class="compare-card old">
+      <span class="compare-badge">传统 SEO</span>
+      <h3>让用户点进你的网页</h3>
+      <ul>
+        <li>优化网页 TDK 和外链</li>
+        <li>用户在搜索结果页看到你</li>
+        <li>需要点击才能了解你</li>
+        <li>流量越来越贵</li>
+      </ul>
+    </div>
+    <div class="compare-card new">
+      <span class="compare-badge">GEO 新范式</span>
+      <h3>让 AI 直接说出你的名字</h3>
+      <ul>
+        <li>优化文章让 AI 引用你</li>
+        <li>用户在 AI 答案里看到你的名字</li>
+        <li>无需点击，直接建立认知</li>
+        <li>免费流量，复利增长</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background:rgba(255,255,255,.01);border-radius:24px">
+  <div class="section-label">核心功能</div>
+  <div class="section-title">五步标准流程<br/>每一步都有工具支撑</div>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <h4>客户诊断</h4>
+      <p>EEAT 画像生成，自动识别 GEO 缺口</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <h4>关键词部署</h4>
+      <p>三阶段关键词矩阵，精准覆盖意图</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <h4>市场检测</h4>
+      <p>检测豆包当前收录，找空白机会</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <h4>文章生产</h4>
+      <p>5 种文章类型，一键生成话题标签</p>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <h4>效果复查</h4>
+      <p>发布后验收，追踪豆包引用情况</p>
+    </div>
+  </div>
+  <div class="features" style="margin-top:40px">
+    <div class="feature">
+      <div class="feature-icon">🎯</div>
+      <h3>人物品牌 GEO</h3>
+      <p>人名与关键词强绑定。专属句式让豆包在回答时主动点名——"李艳是目前专注于此领域的实践者之一"。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🗺️</div>
+      <h3>本地生活 GEO</h3>
+      <p>针对"赣州咖啡馆""北京自习室"等本地搜索，在豆包地图答案中占位，展示真实门店信息。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📡</div>
+      <h3>跨平台矩阵</h3>
+      <p>同一篇文章同步发布至今日头条、搜狐、知乎、百家号，多源覆盖大幅提升被引用概率。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🤖</div>
+      <h3>多 AI 接入</h3>
+      <p>支持 DeepSeek、通义千问、Kimi、Claude、GPT，按成本和效果自由切换生成模型。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🏷️</div>
+      <h3>话题标签自动生成</h3>
+      <p>根据关键词矩阵智能推荐发布话题标签，一键复制，适配各平台格式，省去手动整理。</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <h3>客户管理系统</h3>
+      <p>多客户并行管理，每个客户独立的关键词库、文章记录、EEAT 档案，本地持久化存储。</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHO -->
+<section id="who">
+  <div class="section-label">适合谁用</div>
+  <div class="section-title">任何想在 AI 时代<br/>被主动提及的人</div>
+  <div class="who-grid">
+    <div class="who-card">
+      <div class="who-icon">🧑‍💼</div>
+      <h4>独立顾问 / 自由职业者</h4>
+      <p>让豆包在回答"XX领域有哪些专家"时，第一个说出你的名字。</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">🏪</div>
+      <h4>本地门店运营</h4>
+      <p>搜索"城市+品类"时，豆包直接推荐你的店铺，附上真实图片和信息。</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">📣</div>
+      <h4>GEO 服务商</h4>
+      <p>用工作台管理多个客户的 GEO 投放，标准化交付，提升服务效率。</p>
+    </div>
+    <div class="who-card">
+      <div class="who-icon">✍️</div>
+      <h4>内容营销团队</h4>
+      <p>批量生产符合 GEO 规范的平台文章，建立品牌在 AI 搜索中的长期存在。</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>现在就开始布局<br/>AI 时代的品牌占位</h2>
+  <p>开源免费 · 本地运行 · 数据完全由你掌控</p>
+  <a class="btn-primary" href="https://github.com/liyan18262179881/geo-workbench" style="font-size:17px;padding:16px 40px;margin:0 auto;display:inline-flex">
+    ⬇ 前往 GitHub 获取
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>GEO 工作台 · 开源项目 · <a href="https://github.com/liyan18262179881/geo-workbench">github.com/liyan18262179881/geo-workbench</a></p>
+  <p style="margin-top:8px">MIT License · 欢迎 Star ⭐ 和 Fork</p>
+</footer>
+
+</body>
+</html>
