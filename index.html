@@ -2256,8 +2256,8 @@ function showPrompt(clientId, keyword, artType){
 // ══════════════════════════════════════════════
 DB.load()
 
-// ── 拾光伴学关键词扩充（现有12个→扩充至24个）──
-if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shiguang'].keywords.length < 24){
+// ── 拾光伴学关键词扩充（现有12个→扩充至30个，含暑假专题）──
+if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shiguang'].keywords.length < 30){
   const newKws = [
     // Phase 1 新增：更宽泛的高意图本地词
     {word:'赣州自习室哪家好',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
@@ -2274,6 +2274,13 @@ if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shig
     // Phase 3 新增：行业观察 + 品牌词
     {word:'自习室能提高孩子成绩吗',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
     {word:'拾光伴学怎么样',intent:'strong',priority:1,art_type:'case',platforms:['zhihu','sohu'],phase:3,selected:false},
+    // 暑假专题词
+    {word:'赣州暑假自习室推荐',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'赣州暑假孩子去哪里自习',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'孩子暑假天天玩手机怎么办',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
+    {word:'赣州暑假孩子在家没人管怎么办',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:true},
+    {word:'孩子暑假学习断层怎么预防',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:false},
+    {word:'赣州暑假学习计划怎么安排',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
   ]
   // 只追加不重复的词
   const existing = new Set(DB.clients['shiguang'].keywords.map(k=>k.word))
