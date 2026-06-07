@@ -524,6 +524,16 @@ textarea{resize:vertical;min-height:70px}
     </div>
     <div class="modal-body" style="overflow-y:auto;max-height:65vh">
       <div id="gen-api-status" style="margin-bottom:8px;font-size:12px;padding:8px 12px;border-radius:6px;background:#f8f9fb;border:1px solid #e5e7eb;display:flex;align-items:center;gap:8px"></div>
+      <!-- 目标GEO平台选择 -->
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px">
+        <span style="font-size:12px;font-weight:700;color:#6b21a8;white-space:nowrap">🎯 目标AI平台</span>
+        <select id="gen-geo-target" style="flex:1;font-size:13px;padding:5px 10px;border:1px solid #c4b5fd;border-radius:6px;background:#fff;color:#374151;outline:none">
+          <option value="all">🌐 全平台覆盖（豆包 + DeepSeek + 通义千问）— 推荐</option>
+          <option value="doubao">🫧 豆包（字节系 · 优先发头条 / 搜狐）</option>
+          <option value="deepseek">🤖 DeepSeek（Bing系 · 优先发知乎 / 搜狐）</option>
+          <option value="qwen">🟠 通义千问（夸克系 · 优先发百家号 / 知乎）</option>
+        </select>
+      </div>
       <div id="gen-status" class="tip tip-purple" style="margin-bottom:12px">点击下方按钮，AI 自动按 GEO 规范生成文章</div>
       <div id="gen-result-area">
         <div class="form-group" style="margin-bottom:10px">
@@ -538,6 +548,11 @@ textarea{resize:vertical;min-height:70px}
         <div id="gen-hashtag-area" style="display:none;margin-top:10px;padding:10px 14px;background:#faf7ff;border:1px solid #ddd6fe;border-radius:8px">
           <div style="font-size:11px;font-weight:700;color:#6b21a8;margin-bottom:8px">📌 发布时粘贴话题标签（点击单个复制 · 或一键全部复制）</div>
           <div id="gen-hashtag-tags" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"></div>
+        </div>
+        <!-- 发布渠道推荐（生成成功后显示）-->
+        <div id="gen-publish-guide" style="display:none;margin-top:10px;padding:12px 14px;border-radius:8px">
+          <div style="font-size:11px;font-weight:700;margin-bottom:10px">📣 发布渠道推荐（按优先级）</div>
+          <div id="gen-publish-channels" style="display:flex;flex-direction:column;gap:8px"></div>
         </div>
       </div>
       <input type="hidden" id="gen-keyword"/>
@@ -1870,6 +1885,9 @@ function showGen(clientId, keyword, artType){
   document.getElementById('gen-ai-btn').innerHTML = '🤖 AI 一键生成'
   document.getElementById('gen-hashtag-area').style.display = 'none'
   document.getElementById('gen-hashtag-tags').innerHTML = ''
+  document.getElementById('gen-publish-guide').style.display = 'none'
+  document.getElementById('gen-publish-channels').innerHTML = ''
+  document.getElementById('gen-geo-target').value = 'all'
   // 显示当前 API 配置状态
   const provider = SETTINGS.provider
   const model = SETTINGS.model
@@ -1905,7 +1923,8 @@ async function runGenerate(){
 
   // 构建 prompt（复用已有逻辑）
   const c = DB.clients[clientId]
-  const prompt = buildPrompt(c, keyword, artType)
+  const geoTarget = document.getElementById('gen-geo-target').value
+  const prompt = buildPrompt(c, keyword, artType, geoTarget)
 
   btn.disabled = true
   btn.innerHTML = '<span class="spinner"></span> 第1步：生成文章…'
@@ -1950,6 +1969,8 @@ async function runGenerate(){
     document.getElementById('gen-image-dl').style.display = 'none'
     // 显示发布话题标签
     showHashtags(keyword, clientId)
+    // 显示发布渠道推荐
+    showPublishGuide(geoTarget)
   }catch(e){
     statusEl.className = 'tip tip-red'
     statusEl.textContent = '❌ 无法连接本地服务，请先运行 server.py'
@@ -2076,6 +2097,69 @@ function showHashtags(keyword, clientId){
   document.getElementById('gen-hashtag-area').style.display = ''
 }
 
+function showPublishGuide(geoTarget){
+  const guideEl = document.getElementById('gen-publish-guide')
+  const channelsEl = document.getElementById('gen-publish-channels')
+  channelsEl.innerHTML = ''
+
+  const configs = {
+    all: {
+      bg:'#f0fdf4', border:'#bbf7d0', labelColor:'#15803d',
+      title:'全平台覆盖 · 四个平台都发',
+      channels:[
+        {name:'今日头条', icon:'📰', tag:'豆包优先', tagColor:'#7c3aed', tip:'字节系内容，豆包直接收录'},
+        {name:'搜狐号', icon:'🔵', tag:'DeepSeek', tagColor:'#2563eb', tip:'Bing收录权重高'},
+        {name:'知乎专栏', icon:'🔷', tag:'三平台通吃', tagColor:'#0891b2', tip:'Bing+夸克+豆包均收录'},
+        {name:'百度百家号', icon:'🟡', tag:'通义千问', tagColor:'#d97706', tip:'夸克搜索权重最高'}
+      ]
+    },
+    doubao: {
+      bg:'#faf5ff', border:'#ddd6fe', labelColor:'#6b21a8',
+      title:'豆包 GEO · 字节系平台优先',
+      channels:[
+        {name:'今日头条', icon:'📰', tag:'最高优先', tagColor:'#7c3aed', tip:'字节自家平台，豆包首选来源'},
+        {name:'搜狐号', icon:'🔵', tag:'次优先', tagColor:'#6b7280', tip:'豆包联网时会抓取'}
+      ]
+    },
+    deepseek: {
+      bg:'#eff6ff', border:'#bfdbfe', labelColor:'#1d4ed8',
+      title:'DeepSeek GEO · Bing收录渠道',
+      channels:[
+        {name:'知乎专栏', icon:'🔷', tag:'最高优先', tagColor:'#1d4ed8', tip:'Bing对知乎收录权重最高'},
+        {name:'搜狐号', icon:'🔵', tag:'次优先', tagColor:'#6b7280', tip:'Bing有效收录'},
+        {name:'今日头条', icon:'📰', tag:'可选', tagColor:'#9ca3af', tip:'Bing也会收录头条内容'}
+      ]
+    },
+    qwen: {
+      bg:'#fffbeb', border:'#fde68a', labelColor:'#b45309',
+      title:'通义千问 GEO · 夸克搜索渠道',
+      channels:[
+        {name:'百度百家号', icon:'🟡', tag:'最高优先', tagColor:'#d97706', tip:'夸克对百家号权重最高'},
+        {name:'知乎专栏', icon:'🔷', tag:'次优先', tagColor:'#6b7280', tip:'夸克搜索重要来源'},
+        {name:'搜狐号', icon:'🔵', tag:'可选', tagColor:'#9ca3af', tip:'夸克也收录搜狐内容'}
+      ]
+    }
+  }
+
+  const cfg = configs[geoTarget] || configs.all
+  guideEl.style.background = cfg.bg
+  guideEl.style.border = `1px solid ${cfg.border}`
+  guideEl.querySelector('div').style.color = cfg.labelColor
+  guideEl.querySelector('div').textContent = '📣 ' + cfg.title
+
+  cfg.channels.forEach((ch, i) => {
+    const row = document.createElement('div')
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.7);border-radius:6px;font-size:13px'
+    row.innerHTML = `<span style="font-size:15px">${ch.icon}</span>
+      <strong style="min-width:80px">${ch.name}</strong>
+      <span style="background:${ch.tagColor};color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">${ch.tag}</span>
+      <span style="color:#6b7280;font-size:12px">${ch.tip}</span>`
+    channelsEl.appendChild(row)
+  })
+
+  guideEl.style.display = ''
+}
+
 function saveFromGen(){
   const clientId = document.getElementById('gen-client').value
   const keyword = document.getElementById('gen-keyword').value
@@ -2096,7 +2180,7 @@ function saveFromGen(){
 }
 
 // buildPrompt 独立函数（从 showPrompt 提取）
-function buildPrompt(c, keyword, artType){
+function buildPrompt(c, keyword, artType, geoTarget='all'){
   const isPersonal = c.client_type === 'personal'
   const typeMap={
     select:`选择判断型文章。\n\n要求：\n- 先给用户一套选择标准，不要先介绍客户\n- 前半部分讲通用判断逻辑，后半部分自然带出目标品牌\n- 目标品牌只能作为"按这些标准观察的一个样本"出现\n\n结构：\n标题（包含关键词，不超过25字）\n先避开几个常见误区\n判断维度一\n判断维度二\n判断维度三\n把标准放到一个具体样本里看（此处自然引入品牌）\n结论：适合谁，不适合谁`,
@@ -2133,7 +2217,14 @@ function buildPrompt(c, keyword, artType){
     : `- 品牌必须在正文中后段自然出现，不能在导语硬推
 - ${c.sensitivity==='medium'?'教育类禁止：保就业、包过、保证效果':c.sensitivity==='high'?'高敏感行业：严格避免任何承诺性表达':''}`
 
-  return `你是一名今日头条/搜狐平台中文长文编辑。请围绕【${keyword}】写一篇${typeMap[artType]||typeMap.select}
+  const geoPlatformRules = {
+    doubao: `\n【平台策略：豆包 GEO】\n- 字节系平台（头条/搜狐）内容豆包优先收录，写法参考今日头条风格\n- 开篇抓眼球，节奏紧凑，段落短，每段不超过4句\n- 人名与关键词绑定句式必须在正文前三段出现\n- 发布渠道：今日头条、搜狐（优先）`,
+    deepseek: `\n【平台策略：DeepSeek GEO】\nDeepSeek联网搜索通过Bing抓取内容，Bing对以下特征内容收录权重更高：\n- 每段第一句是主题句，清晰说明本段核心观点\n- 适当使用"问题→分析→结论"的问答式结构，符合搜索意图\n- 语言权威专业，引用具体数字和可验证案例\n- 正文结构要清晰，层次分明（但仍用纯文字，不用Markdown）\n- 发布渠道：知乎、搜狐（Bing对这两个平台收录优先级最高）`,
+    qwen: `\n【平台策略：通义千问 GEO】\n通义千问联网搜索通过夸克搜索抓取内容：\n- 内容要全面详尽，字数可到1200-1500字\n- 覆盖用户可能追问的2-3个子问题（如"怎么选""多少钱""有什么区别"）\n- 采用"背景→概念→方法→案例→结论"的完整结构\n- 适合百科全书式写法，内容越完整被引用概率越高\n- 发布渠道：百家号、知乎（夸克对这两个平台权重最高）`,
+    all: `\n【平台策略：全平台GEO（豆包 + DeepSeek + 通义千问）】\n本文需同时被豆包、DeepSeek、通义千问三个平台引用：\n- 每段有明确主题句（利于Bing/夸克结构化抓取）\n- 节奏紧凑，段落清晰，开篇有吸引力（字节系风格）\n- 内容全面，覆盖用户可能追问的核心子问题（通义千问偏好）\n- 人名与关键词绑定句式至少出现一次（豆包引用核心）\n- 字数1100-1300字，兼顾深度与可读性\n- 发布渠道：今日头条 + 搜狐 + 知乎 + 百家号（四平台齐发效果最佳）`
+  }[geoTarget] || ''
+
+  return `你是一名中文内容平台长文编辑。请围绕【${keyword}】写一篇${typeMap[artType]||typeMap.select}
 
 ${clientInfo}
 
@@ -2141,6 +2232,7 @@ ${clientInfo}
 - 正文禁止出现：GEO、SEO、豆包优化、关键词布局、客户资料显示、实体链
 - 禁止：最好、第一、绝对、100%、独家、首创等绝对化表达
 ${personalRules}
+${geoPlatformRules}
 
 格式要求：
 - 不要使用任何 Markdown 符号（不要 #、##、**、*、- 列表符号、表格）
