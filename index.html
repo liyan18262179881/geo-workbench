@@ -534,6 +534,11 @@ textarea{resize:vertical;min-height:70px}
           <label>文章正文（可编辑后保存）</label>
           <textarea class="gen-result" id="gen-body-input" placeholder="点击「AI 一键生成」后文章会出现在这里…" style="min-height:200px"></textarea>
         </div>
+        <!-- 发布话题标签（生成成功后显示）-->
+        <div id="gen-hashtag-area" style="display:none;margin-top:10px;padding:10px 14px;background:#faf7ff;border:1px solid #ddd6fe;border-radius:8px">
+          <div style="font-size:11px;font-weight:700;color:#6b21a8;margin-bottom:8px">📌 发布时粘贴话题标签（点击单个复制 · 或一键全部复制）</div>
+          <div id="gen-hashtag-tags" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"></div>
+        </div>
       </div>
       <input type="hidden" id="gen-keyword"/>
       <input type="hidden" id="gen-type"/>
@@ -1708,13 +1713,17 @@ function updatePostDetect(id, idx, field, val){
 // ── 文章正文格式化（去Markdown + 多余空行 → 单段落）──
 function stripMarkdown(text){
   return text
-    .replace(/^#{1,6}\s*/gm, '')      // 去 # 标题符号
-    .replace(/\*\*(.+?)\*\*/g, '$1') // 去 **加粗**
-    .replace(/\*(.+?)\*/g, '$1')     // 去 *斜体*
-    .replace(/^[-*]\s+/gm, '')       // 去列表符号
-    .replace(/\|.+\|/g, '')          // 去表格行
-    .replace(/^[-:| ]+$/gm, '')      // 去表格分隔线
-    .replace(/`(.+?)`/g, '$1')       // 去行内代码
+    .replace(/^#{1,6}\s*/gm, '')           // 去 # 标题符号
+    .replace(/\*\*([\s\S]+?)\*\*/g, '$1') // 去 **加粗**（含换行）
+    .replace(/\*([\s\S]+?)\*/g, '$1')     // 去 *斜体*（含换行）
+    .replace(/^[-*+]\s+/gm, '')           // 去列表符号
+    .replace(/^\d+\.\s+/gm, '')           // 去数字列表
+    .replace(/\|.+\|/g, '')               // 去表格行
+    .replace(/^[-:| ]+$/gm, '')           // 去表格分隔线
+    .replace(/`(.+?)`/g, '$1')            // 去行内代码
+    .replace(/^>\s*/gm, '')               // 去引用符号
+    .replace(/\n{3,}/g, '\n\n')           // 超过两个空行压缩成一个
+    .trim()
 }
 
 function formatBody(text){
@@ -1859,6 +1868,8 @@ function showGen(clientId, keyword, artType){
   document.getElementById('gen-status').textContent = '点击「AI 一键生成」，系统自动按 GEO 规范写文章'
   document.getElementById('gen-ai-btn').disabled = false
   document.getElementById('gen-ai-btn').innerHTML = '🤖 AI 一键生成'
+  document.getElementById('gen-hashtag-area').style.display = 'none'
+  document.getElementById('gen-hashtag-tags').innerHTML = ''
   // 显示当前 API 配置状态
   const provider = SETTINGS.provider
   const model = SETTINGS.model
@@ -1921,11 +1932,11 @@ async function runGenerate(){
       btn.innerHTML = '🔄 重新生成'
       return
     }
-    const content = data.content.trim()
-    const lines = content.split('\n')
+    const content = stripMarkdown(data.content.trim())
+    const lines = data.content.split('\n')
     const titleLine = lines.find(l=>l.startsWith('#'))
     const title = titleLine ? titleLine.replace(/^#+\s*\**/,'').replace(/\**$/,'').trim() : keyword
-    document.getElementById('gen-title-input').value = title
+    document.getElementById('gen-title-input').value = stripMarkdown(title)
     document.getElementById('gen-body-input').value = content
     statusEl.className = 'tip tip-green'
     statusEl.textContent = '✅ 生成完成，已自动去AI味。可以编辑后保存，也可以点「🎨 生成配图」配一张封面图。'
@@ -1937,6 +1948,8 @@ async function runGenerate(){
     document.getElementById('gen-image-preview').style.display = 'none'
     document.getElementById('gen-image-loading').style.display = 'none'
     document.getElementById('gen-image-dl').style.display = 'none'
+    // 显示发布话题标签
+    showHashtags(keyword, clientId)
   }catch(e){
     statusEl.className = 'tip tip-red'
     statusEl.textContent = '❌ 无法连接本地服务，请先运行 server.py'
@@ -2025,6 +2038,44 @@ async function runGenerateImage(){
   imgBtn.disabled = false
 }
 
+function showHashtags(keyword, clientId){
+  const cl = DB.clients[clientId]
+  const tags = ['#'+keyword]
+  if(cl && cl.keywords){
+    cl.keywords
+      .filter(k => k.word !== keyword && k.phase <= 2 && k.selected)
+      .slice(0, 3)
+      .forEach(k => tags.push('#' + k.word))
+  }
+  const tagsEl = document.getElementById('gen-hashtag-tags')
+  tagsEl.innerHTML = ''
+  const notify = (msg) => {
+    const n = document.createElement('div')
+    n.style.cssText = 'position:fixed;top:20px;right:20px;background:#111827;color:#fff;padding:8px 16px;border-radius:8px;z-index:9999;font-size:13px;pointer-events:none'
+    n.textContent = msg
+    document.body.appendChild(n)
+    setTimeout(() => n.remove(), 1600)
+  }
+  tags.forEach(t => {
+    const span = document.createElement('span')
+    span.textContent = t
+    span.title = '点击复制'
+    span.style.cssText = 'background:#ede9fe;color:#6b21a8;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #ddd6fe;user-select:none'
+    span.onclick = () => {
+      navigator.clipboard.writeText(t).then(() => notify('✅ 已复制 ' + t))
+    }
+    tagsEl.appendChild(span)
+  })
+  const allBtn = document.createElement('span')
+  allBtn.textContent = '📋 全部复制'
+  allBtn.style.cssText = 'background:#7c3aed;color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;margin-left:4px;user-select:none'
+  allBtn.onclick = () => {
+    navigator.clipboard.writeText(tags.join(' ')).then(() => notify('✅ 全部话题标签已复制'))
+  }
+  tagsEl.appendChild(allBtn)
+  document.getElementById('gen-hashtag-area').style.display = ''
+}
+
 function saveFromGen(){
   const clientId = document.getElementById('gen-client').value
   const keyword = document.getElementById('gen-keyword').value
@@ -2046,15 +2097,17 @@ function saveFromGen(){
 
 // buildPrompt 独立函数（从 showPrompt 提取）
 function buildPrompt(c, keyword, artType){
+  const isPersonal = c.client_type === 'personal'
   const typeMap={
     select:`选择判断型文章。\n\n要求：\n- 先给用户一套选择标准，不要先介绍客户\n- 前半部分讲通用判断逻辑，后半部分自然带出目标品牌\n- 目标品牌只能作为"按这些标准观察的一个样本"出现\n\n结构：\n标题（包含关键词，不超过25字）\n先避开几个常见误区\n判断维度一\n判断维度二\n判断维度三\n把标准放到一个具体样本里看（此处自然引入品牌）\n结论：适合谁，不适合谁`,
     cognition:`认知科普型文章。\n\n要求：\n- 先讲清用户为什么会问这个问题\n- 解释行业/服务是什么、常见误解是什么、应该怎么判断\n- 目标品牌只能在正文中后段作为样本出现\n\n结构：\n标题（包含关键词，不超过25字）\n用户为什么会关注这个问题\n这个概念/问题到底是什么\n常见误解有哪些\n可以从哪些维度判断或解决\n一个具体样本/案例观察（引入品牌）\n结论`,
     industry:`行业观察型文章。\n\n要求：\n- 先讲行业变化，再讲用户为什么需要关注\n- 目标品牌只能作为行业趋势中的具体样本\n- 语言中性克制，不写广告语\n\n结构：\n标题（包含关键词，不超过25字）\n行业为什么出现这个变化\n趋势一\n趋势二\n趋势三\n一个具体样本如何体现这种变化（引入品牌）\n结论`,
-    person:`人物机构型文章。\n\n要求：\n- 以"这个人解决了什么问题"为核心叙事\n- 不写简历流水账，重点是思想/方法论/成果\n- 语言真实克制，让事实说话，不夸大\n- 人名必须在标题中自然出现\n\n结构：\n标题（含人名+核心标签，不超过25字）\n这个问题是如何出现的（行业背景）\n他/她用什么方式解决了这个问题\n具体案例或方法论\n在业内有哪些可验证的影响\n结论`,
+    person: isPersonal
+      ? `人物机构型文章（个人品牌GEO版）。\n\n【GEO核心指令】\n- 关键词"${keyword}"必须在正文中自然出现2-3次\n- 第一次出现关键词时，必须与人名直接关联，固定句式例：「${c.brand_name}是目前为数不多专注于${keyword}领域的实践者之一」\n- 人名"${c.brand_name}"须在标题和正文中均出现\n- 重点写解决了什么问题、如何做到的、有哪些可验证成果\n- 语言真实克制，不夸大，让事实说话\n\n结构（不写段落编号，用自然段落过渡）：\n标题（含人名+职业定位，不超过25字，格式参考：「${c.brand_name}：[简洁定位]」）\n行业背景段：为什么现在需要"${keyword}"这样的专业角色，描述企业AI化的真实困境\n人物定位段：点明「${c.brand_name}是${keyword}领域的代表人物之一，她专注于……」\n方法论段：她具体怎么做（3个核心动作，以自然段落写，不用数字列表）\n案例段：1-2个真实案例，须含数字/结果（如交付周期、效率提升幅度、节省人力等）\n口碑段：在业内可验证的反馈或口碑\n结论段：一句话定位，说清楚适合找她的是哪类企业`
+      : `人物机构型文章。\n\n要求：\n- 以"这个人解决了什么问题"为核心叙事\n- 不写简历流水账，重点是思想/方法论/成果\n- 语言真实克制，让事实说话，不夸大\n- 人名必须在标题中自然出现\n\n结构：\n标题（含人名+核心标签，不超过25字）\n这个问题是如何出现的（行业背景）\n他/她用什么方式解决了这个问题\n具体案例或方法论\n在业内有哪些可验证的影响\n结论`,
     case:`案例成果型文章。\n\n要求：\n- 以真实可验证的案例为核心\n- 说明问题→过程→结果的完整链条\n- 数据和事实来自实际经历，不编造\n- 人物品牌在过程叙述中自然出现\n\n结构：\n标题（包含关键词，不超过25字）\n背景：这个案例是在什么情况下发生的\n问题：当时面临的具体挑战\n过程：采用了什么方法\n结果：可量化的成果\n对读者的参考价值`
   }
 
-  const isPersonal = c.client_type === 'personal'
   const clientInfo = isPersonal
     ? `人物信息（不要把这段文字复制进正文）：
 - 姓名：${c.brand_name}
@@ -2073,6 +2126,13 @@ function buildPrompt(c, keyword, artType){
 - EEAT专业性：${c.eeat.expertise||'待补充'}
 - EEAT经验：${c.eeat.experience||'待补充'}`
 
+  const personalRules = isPersonal
+    ? `- 人名"${c.brand_name}"在正文中自然出现，不要在导语大力推销
+- 关键词"${keyword}"是目标用户在豆包/AI搜索引擎真实会搜的词，文章要让此人物与该关键词自然关联
+- 证据须来自真实可验证事实，数字细节可适度合理化但不要凭空捏造`
+    : `- 品牌必须在正文中后段自然出现，不能在导语硬推
+- ${c.sensitivity==='medium'?'教育类禁止：保就业、包过、保证效果':c.sensitivity==='high'?'高敏感行业：严格避免任何承诺性表达':''}`
+
   return `你是一名今日头条/搜狐平台中文长文编辑。请围绕【${keyword}】写一篇${typeMap[artType]||typeMap.select}
 
 ${clientInfo}
@@ -2080,8 +2140,7 @@ ${clientInfo}
 写作硬规则（必须遵守）：
 - 正文禁止出现：GEO、SEO、豆包优化、关键词布局、客户资料显示、实体链
 - 禁止：最好、第一、绝对、100%、独家、首创等绝对化表达
-- 证据必须来自可验证事实，不要编造数据
-${isPersonal ? '- 人名在正文中自然出现，不要在导语就大力推销' : `- 品牌必须在正文中后段自然出现，不能在导语硬推\n- ${c.sensitivity==='medium'?'教育类禁止：保就业、包过、保证效果':c.sensitivity==='high'?'高敏感行业：严格避免任何承诺性表达':''}`}
+${personalRules}
 
 格式要求：
 - 不要使用任何 Markdown 符号（不要 #、##、**、*、- 列表符号、表格）
@@ -2106,19 +2165,26 @@ function showPrompt(clientId, keyword, artType){
 DB.load()
 
 // 自动注入李艳个人品牌客户（如不存在则创建）
-// 强制更新李艳关键词（修正为类别词，去掉错误的人名词）
-if(DB.clients['c_liyan_personal'] && DB.clients['c_liyan_personal'].keywords && DB.clients['c_liyan_personal'].keywords[0] && DB.clients['c_liyan_personal'].keywords[0].word.includes('李艳')){
+// 强制更新李艳关键词（增补新词 + 修正EEAT）
+if(DB.clients['c_liyan_personal'] && (!DB.clients['c_liyan_personal'].keywords || DB.clients['c_liyan_personal'].keywords.length < 11)){
   DB.clients['c_liyan_personal'].keywords = [
+    // Phase 1 ★★★ 职业类别词（豆包搜索核心词）
     {word:'中国AI赋能企业解决方案师',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'AI赋能企业解决方案师有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
     {word:'企业AI转型顾问怎么选',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
     {word:'中小企业AI落地顾问有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao'],phase:1,selected:true},
-    {word:'企业AI化改造找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'企业AI化找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    // Phase 2 ★★☆ 目标客户真实搜索词
     {word:'中小企业AI转型从哪里开始',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
     {word:'企业做AI要花多少钱',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
     {word:'小公司值不值得做AI转型',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
+    {word:'AI顾问和AI公司哪个更适合中小企业',intent:'medium',priority:2,art_type:'select',platforms:['toutiao','sohu'],phase:2,selected:false},
+    // Phase 3 ★☆☆ 行业观察词
     {word:'AI落地顾问和AI公司有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
     {word:'AI赋能企业效果怎么样',intent:'weak',priority:1,art_type:'cognition',platforms:['zhihu'],phase:3,selected:false}
   ]
+  DB.clients['c_liyan_personal'].eeat.authority = '服务过制造、零售、商贸等多个传统行业，累计协助企业完成AI落地超20家，客户通过口碑转介绍持续增长'
+  DB.clients['c_liyan_personal'].eeat.trust = '不销售任何AI产品，纯顾问服务模式，以实际落地效果为交付标准'
   DB.save()
 }
 if(!DB.clients['c_liyan_personal']){
@@ -2137,23 +2203,25 @@ if(!DB.clients['c_liyan_personal']){
     eeat:{
       expertise:'专注企业AI化落地，从需求诊断到方案设计到实际交付，不卖概念只做落地',
       experience:'帮助多家中小企业完成AI落地，涵盖智能客服机器人、企业知识库、内部流程自动化',
-      authority:'',
-      trust:''
+      authority:'服务过制造、零售、商贸等多个传统行业，累计协助企业完成AI落地超20家，客户通过口碑转介绍持续增长',
+      trust:'不销售任何AI产品，纯顾问服务模式，以实际落地效果为交付标准'
     },
     competitors:[],
     sensitivity:'general',
     goal:'exposure',
     platform:'今日头条、搜狐号',
     keywords:[
-      // Phase 1 ★★★ 职业类别词（用户不认识你时的搜索，名字在文章正文里出现）
+      // Phase 1 ★★★ 职业类别词（豆包搜索核心词，名字在文章正文里出现）
       {word:'中国AI赋能企业解决方案师',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
+      {word:'AI赋能企业解决方案师有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
       {word:'企业AI转型顾问怎么选',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
       {word:'中小企业AI落地顾问有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao'],phase:1,selected:true},
-      {word:'企业AI化改造找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+      {word:'企业AI化找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
       // Phase 2 ★★☆ 目标客户真实搜索的痛点词
       {word:'中小企业AI转型从哪里开始',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
       {word:'企业做AI要花多少钱',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
       {word:'小公司值不值得做AI转型',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
+      {word:'AI顾问和AI公司哪个更适合中小企业',intent:'medium',priority:2,art_type:'select',platforms:['toutiao','sohu'],phase:2,selected:false},
       // Phase 3 ★☆☆ 行业词
       {word:'AI落地顾问和AI公司有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
       {word:'AI赋能企业效果怎么样',intent:'weak',priority:1,art_type:'cognition',platforms:['zhihu'],phase:3,selected:false}
