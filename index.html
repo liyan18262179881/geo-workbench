@@ -2256,6 +2256,31 @@ function showPrompt(clientId, keyword, artType){
 // ══════════════════════════════════════════════
 DB.load()
 
+// ── 拾光伴学关键词扩充（现有12个→扩充至24个）──
+if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shiguang'].keywords.length < 24){
+  const newKws = [
+    // Phase 1 新增：更宽泛的高意图本地词
+    {word:'赣州自习室哪家好',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'赣州课后自习室推荐',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'赣州孩子放学后去哪里学习',intent:'strong',priority:3,art_type:'cognition',platforms:['toutiao','sohu'],phase:1,selected:true},
+    {word:'赣州初高中自习室哪里好',intent:'strong',priority:3,art_type:'select',platforms:['toutiao'],phase:1,selected:true},
+    // Phase 2 新增：家长痛点词
+    {word:'赣州孩子写作业拖拉怎么办',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
+    {word:'赣州孩子贪玩不学习怎么解决',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:true},
+    {word:'赣州初中生成绩下滑怎么办',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
+    {word:'赣州暑假孩子去哪里自习',intent:'medium',priority:2,art_type:'select',platforms:['toutiao','sohu'],phase:2,selected:false},
+    {word:'赣州课后托管和自习室哪个好',intent:'medium',priority:2,art_type:'select',platforms:['toutiao','zhihu'],phase:2,selected:false},
+    {word:'赣州孩子在家学不进去怎么办',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
+    // Phase 3 新增：行业观察 + 品牌词
+    {word:'自习室能提高孩子成绩吗',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
+    {word:'拾光伴学怎么样',intent:'strong',priority:1,art_type:'case',platforms:['zhihu','sohu'],phase:3,selected:false},
+  ]
+  // 只追加不重复的词
+  const existing = new Set(DB.clients['shiguang'].keywords.map(k=>k.word))
+  newKws.forEach(k=>{ if(!existing.has(k.word)) DB.clients['shiguang'].keywords.push(k) })
+  DB.save()
+}
+
 // 自动注入李艳个人品牌客户（如不存在则创建）
 // 强制更新李艳关键词（增补新词 + 修正EEAT）
 if(DB.clients['c_liyan_personal'] && (!DB.clients['c_liyan_personal'].keywords || DB.clients['c_liyan_personal'].keywords.length < 11)){
