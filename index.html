@@ -220,9 +220,10 @@ textarea{resize:vertical;min-height:70px}
   .client-cards{grid-template-columns:1fr}
 }
 /* ── Step4 双栏布局 ── */
-.kw-split{display:grid;grid-template-columns:220px 1fr;border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:540px}
+.kw-split{display:grid;grid-template-columns:210px 1fr 130px;border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:560px}
 .kw-sidebar{border-right:1px solid var(--border);overflow-y:auto;background:#fafafa;padding:8px}
-.kw-main{overflow-y:auto;padding:20px 22px;background:#fff}
+.kw-main{overflow-y:auto;padding:18px 20px;background:#fff;border-right:1px solid var(--border)}
+.kw-versions{overflow-y:auto;background:#fafafa;padding:12px 10px}
 .kw-item{padding:9px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer;border:1px solid transparent;transition:.12s}
 .kw-item:hover{background:#f5f3ff}
 .kw-item.kw-active{background:#f5f3ff;border-color:#ddd6fe}
@@ -232,10 +233,16 @@ textarea{resize:vertical;min-height:70px}
 .pub-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid;transition:.12s;user-select:none}
 .pub-chip.pub-off{background:#f9fafb;border-color:#e5e7eb;color:#9ca3af}
 .pub-chip.pub-on{background:#dcfce7;border-color:#86efac;color:#15803d}
-.ver-bar{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
-.ver-btn{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;cursor:pointer;transition:.12s}
-.ver-btn.ver-cur{background:#ede9fe;border-color:#c4b5fd;color:#7c3aed}
-.ver-btn:hover{border-color:#c4b5fd;color:#6d28d9}
+.ver-card{padding:8px 10px;border-radius:8px;margin-bottom:6px;border:1.5px solid;cursor:default;transition:.12s}
+.ver-card.ver-cur{background:#f5f3ff;border-color:#c4b5fd}
+.ver-card.ver-old{background:#fff;border-color:#e5e7eb;cursor:pointer}
+.ver-card.ver-old:hover{border-color:#c4b5fd;background:#faf5ff}
+.ver-num{font-size:13px;font-weight:800;color:#7c3aed;margin-bottom:2px}
+.ver-old .ver-num{color:#9ca3af}
+.ver-date{font-size:10px;color:#9ca3af}
+.ver-label{font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:3px}
+.ver-cur .ver-label{background:#ede9fe;color:#7c3aed}
+.ver-old .ver-label{background:#f3f4f6;color:#9ca3af}
 </style>
 </head>
 <body>
@@ -1341,20 +1348,24 @@ function renderArticles(c){
     </div>`
   }).join('')
 
-  // ── 右栏文章区域 ──
-  let mainPanel
+  // ── 中栏：文章内容 ──
+  let mainPanel, verPanel
+
   if(!selKw){
-    mainPanel = `<div style="color:#9ca3af;text-align:center;padding:80px 20px;font-size:14px">← 从左侧选择一个关键词开始</div>`
+    mainPanel = `<div style="color:#9ca3af;text-align:center;padding:80px 20px;font-size:14px">← 从左侧选择一个关键词</div>`
+    verPanel  = ''
   } else if(!selArt){
     mainPanel = `
       <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:6px">${selKw.word}</div>
       <div class="tip tip-purple" style="margin-bottom:16px">还没有文章，点击下方按钮让 AI 生成</div>
       <button class="btn btn-primary" onclick="showGen('${c.id}','${selKw.word.replace(/'/g,"\\'")}','${selKw.art_type}')">✍️ AI 一键生成</button>
     `
+    verPanel = `<div style="color:#d1d5db;font-size:11px;text-align:center;padding-top:20px">暂无版本</div>`
   } else {
-    const artId = `body-${selArt.id}`
-    const pp = selArt.publishedPlatforms||[]
+    const artId   = `body-${selArt.id}`
+    const pp      = selArt.publishedPlatforms||[]
     const versions = selArt.versions||[]
+    const totalVer = versions.length + 1   // 当前算1个版本
 
     const platChips = ALL_PLATS.map(p=>{
       const on = pp.includes(p)
@@ -1363,23 +1374,11 @@ function renderArticles(c){
       </span>`
     }).join('')
 
-    const verBar = versions.length>0 ? `
-      <div style="margin-top:14px;border-top:1px solid #f0f0f0;padding-top:10px">
-        <div style="font-size:11px;font-weight:700;color:#9ca3af;margin-bottom:6px">📁 历史版本（点击可恢复）</div>
-        <div class="ver-bar">
-          <span class="ver-btn ver-cur">当前版本</span>
-          ${[...versions].reverse().map((v,ri)=>{
-            const realIdx = versions.length-1-ri
-            return `<span class="ver-btn" onclick="restoreVersion('${c.id}','${selArt.id}',${realIdx})" title="${v.title||''}">v${realIdx+1} · ${v.savedAt||'历史'}</span>`
-          }).join('')}
-        </div>
-      </div>` : ''
-
     mainPanel = `
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
         <div>
-          <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:4px">${selArt.title||selKw.word}</div>
-          <div style="font-size:11px;color:#9ca3af">${artLabel[selKw.art_type]||selKw.art_type}${versions.length>0?' · '+( versions.length+1)+' 个版本':' · 第 1 版'}</div>
+          <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:3px">${selArt.title||selKw.word}</div>
+          <div style="font-size:11px;color:#9ca3af">${artLabel[selKw.art_type]||selKw.art_type} · 共 ${totalVer} 个版本</div>
         </div>
         <div style="display:flex;gap:5px;flex-shrink:0">
           <button class="btn btn-green btn-sm" onclick="copyArticle('${artId}',this)">📋 复制</button>
@@ -1387,14 +1386,32 @@ function renderArticles(c){
           <button class="btn btn-primary btn-sm" onclick="showGen('${c.id}','${selKw.word.replace(/'/g,"\\'")}','${selKw.art_type}')">🔄 重新生成</button>
         </div>
       </div>
-
-      <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">📣 发布状态（点击标记已发布平台）</div>
+      <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">📣 已发布平台（点击切换）</div>
       <div class="pub-tracks">${platChips}</div>
-
       <div id="${artId}" data-raw="${(selArt.body||'').replace(/"/g,'&quot;').replace(/\n/g,'\\n')}" style="display:none"></div>
-      <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap;max-height:400px;overflow-y:auto">${stripMarkdown(selArt.body||'')}</div>
-      ${verBar}
+      <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap;max-height:420px;overflow-y:auto">${stripMarkdown(selArt.body||'')}</div>
     `
+
+    // ── 右栏：版本列 ──
+    // 最新版本（当前）排最上，编号最大
+    const curCard = `
+      <div class="ver-card ver-cur">
+        <div class="ver-num">v${totalVer}.0</div>
+        <div class="ver-date">${new Date().toISOString().slice(0,10)}</div>
+        <span class="ver-label">当前</span>
+      </div>`
+
+    const oldCards = [...versions].reverse().map((v, ri)=>{
+      const realIdx = versions.length - 1 - ri
+      const vNum = versions.length - ri   // v2, v1...
+      return `<div class="ver-card ver-old" onclick="restoreVersion('${c.id}','${selArt.id}',${realIdx})" title="点击恢复此版本">
+        <div class="ver-num">v${vNum}.0</div>
+        <div class="ver-date">${v.savedAt||'历史'}</div>
+        <span class="ver-label">点击恢复</span>
+      </div>`
+    }).join('')
+
+    verPanel = curCard + oldCards
   }
 
   return `
@@ -1404,10 +1421,14 @@ function renderArticles(c){
   </div>
   <div class="kw-split">
     <div class="kw-sidebar">
-      <div style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:1px;padding:4px 6px 8px;text-transform:uppercase">关键词</div>
+      <div style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:1px;padding:4px 6px 8px">关键词</div>
       ${kwList}
     </div>
     <div class="kw-main">${mainPanel}</div>
+    <div class="kw-versions">
+      <div style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:1px;margin-bottom:10px">版本历史</div>
+      ${verPanel}
+    </div>
   </div>
   ${withArt>0?`<div style="display:flex;justify-content:flex-end;margin-top:10px">
     <button class="btn btn-primary" onclick="completeStep(4)">✅ 进入发布后复查 →</button>
