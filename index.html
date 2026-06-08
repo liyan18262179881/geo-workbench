@@ -1851,7 +1851,7 @@ function stripMarkdown(text){
     .replace(/^[-:| ]+$/gm, '')           // 去表格分隔线
     .replace(/`(.+?)`/g, '$1')            // 去行内代码
     .replace(/^>\s*/gm, '')               // 去引用符号
-    .replace(/\n{3,}/g, '\n\n')           // 超过两个空行压缩成一个
+    .replace(/\n{2,}/g, '\n')             // 去所有空行，只保留单个换行
     .trim()
 }
 
@@ -1866,7 +1866,7 @@ function formatBody(text){
 
 function copyArticle(bodyId, btn){
   const el = document.getElementById(bodyId)
-  const raw = stripMarkdown(el?.dataset.raw || '').replace(/\n{3,}/g,'\n\n').trim()
+  const raw = stripMarkdown(el?.dataset.raw || '').trim()
   navigator.clipboard.writeText(raw).then(()=>{
     btn.classList.add('copied'); btn.textContent='✅ 已复制'
     setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='📋 复制正文' },2500)
