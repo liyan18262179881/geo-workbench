@@ -219,6 +219,23 @@ textarea{resize:vertical;min-height:70px}
   .form-grid,.diag-grid{grid-template-columns:1fr}
   .client-cards{grid-template-columns:1fr}
 }
+/* ── Step4 双栏布局 ── */
+.kw-split{display:grid;grid-template-columns:220px 1fr;border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:540px}
+.kw-sidebar{border-right:1px solid var(--border);overflow-y:auto;background:#fafafa;padding:8px}
+.kw-main{overflow-y:auto;padding:20px 22px;background:#fff}
+.kw-item{padding:9px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer;border:1px solid transparent;transition:.12s}
+.kw-item:hover{background:#f5f3ff}
+.kw-item.kw-active{background:#f5f3ff;border-color:#ddd6fe}
+.kw-item-word{font-size:12.5px;font-weight:600;color:#111827;line-height:1.4}
+.kw-item-meta{font-size:11px;color:#9ca3af;margin-top:2px}
+.pub-tracks{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
+.pub-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid;transition:.12s;user-select:none}
+.pub-chip.pub-off{background:#f9fafb;border-color:#e5e7eb;color:#9ca3af}
+.pub-chip.pub-on{background:#dcfce7;border-color:#86efac;color:#15803d}
+.ver-bar{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.ver-btn{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;cursor:pointer;transition:.12s}
+.ver-btn.ver-cur{background:#ede9fe;border-color:#c4b5fd;color:#7c3aed}
+.ver-btn:hover{border-color:#c4b5fd;color:#6d28d9}
 </style>
 </head>
 <body>
@@ -693,6 +710,7 @@ const DB = {
 // ══════════════════════════════════════════════
 let currentClientId = null
 let currentStep = 1
+let step4SelectedKw = null  // Step4 当前选中的关键词
 
 // ══════════════════════════════════════════════
 // 路由
@@ -1288,71 +1306,146 @@ function renderDetectionReport(c){
   </div>`
 }
 
-// ── Step 4: 文章 ──
+// ── Step 4: 文章（双栏 · 关键词驱动 · 版本历史） ──
 function renderArticles(c){
-  const artLabel={select:'选择判断型',cognition:'认知科普型',industry:'行业观察型',person:'人物机构型',case:'案例成果型'}
-  const artCls={select:'t-select',cognition:'t-cognition',industry:'t-industry',person:'t-ok',case:'t-industry'}
-  const platLabel={toutiao:'头条',sohu:'搜狐',zhihu:'知乎'}
-  const platCls={toutiao:'t-tt',sohu:'t-sh',zhihu:'t-zh'}
+  const artLabel={select:'选择判断',cognition:'认知科普',industry:'行业观察',person:'人物机构',case:'案例成果'}
+  const platLabel={toutiao:'今日头条',sohu:'搜狐',zhihu:'知乎',baijiahao:'百家号'}
+  const ALL_PLATS = ['toutiao','sohu','zhihu','baijiahao']
 
   const selectedKws = c.keywords.filter(k=>k.selected&&k.phase<=2)
 
-  return `
-  <div class="tip tip-purple">📐 <strong>来源：geo-article-writer</strong> · 五类文章规范 · 先回答用户问题，中后段自然引出品牌</div>
-  <div class="tip tip-amber">⚠️ 搜狐版标题去掉"推荐/靠谱"，正文去掉电话。教育类禁止写保就业/包过/保证效果。</div>
+  // 自动选中第一个有文章的关键词
+  if(!step4SelectedKw || !selectedKws.find(k=>k.word===step4SelectedKw)){
+    const first = selectedKws.find(k=>c.articles.find(a=>a.keyword===k.word)) || selectedKws[0]
+    step4SelectedKw = first?.word || null
+  }
 
-  <div class="card">
-    <div class="card-head"><h3>📋 待生成文章清单</h3><span class="ch-sub">基于已选关键词</span></div>
-    <div class="card-body" style="overflow-x:auto">
-      <table>
-        <thead><tr><th>关键词 · 文章类型 · 平台</th><th style="text-align:right">操作</th></tr></thead>
-        <tbody>
-          ${selectedKws.map(k=>{
-            const existing = c.articles.find(a=>a.keyword===k.word)
-            const artId = existing ? `body-${existing.id}` : ''
-            return `
-            <tr style="border-top:2px solid #f0f0f0">
-              <td style="padding-top:14px;padding-bottom:${existing?'6px':'14px'}">
-                <div style="font-weight:700;font-size:13px">${k.word}</div>
-                <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
-                  <span class="tag ${artCls[k.art_type]}">${artLabel[k.art_type]}</span>
-                  ${k.platforms.map(p=>`<span class="tag ${platCls[p]}">${platLabel[p]}</span>`).join('')}
-                </div>
-              </td>
-              <td style="padding-top:14px;padding-bottom:${existing?'6px':'14px'};text-align:right;vertical-align:top">
-                ${existing
-                  ? `<button class="btn btn-green btn-sm" onclick="copyArticle('${artId}',this)">📋 复制正文</button>
-                     <button class="btn btn-ghost btn-sm" style="margin-left:4px" onclick="humanizeArticle('${c.id}','${existing.id}',this)" title="去AI味">🧑 去AI味</button>
-                     <button class="btn btn-primary btn-sm" style="margin-left:4px" onclick="showGen('${c.id}','${k.word}','${k.art_type}')">🔄 重新生成</button>`
-                  : `<button class="btn btn-primary btn-sm" onclick="showGen('${c.id}','${k.word}','${k.art_type}')">✍️ 生成文章</button>`
-                }
-              </td>
-            </tr>
-            ${existing ? `
-            <tr>
-              <td colspan="2" style="padding-top:0;padding-bottom:14px">
-                <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px">
-                  <div id="${artId}" data-raw="${existing.body.replace(/"/g,'&quot;')}" style="display:none"></div>
-                  <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">📄 ${existing.title}</div>
-                  <div style="font-size:12px;color:#6b7280;line-height:1.7;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical">${stripMarkdown(existing.body).replace(/\n+/g,' ').trim().slice(0,180)}…</div>
-                  <button class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:11px" onclick="toggleFullArticle('full-${existing.id}',this)">展开全文</button>
-                  <div id="full-${existing.id}" style="display:none;margin-top:10px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap">${stripMarkdown(existing.body)}</div>
-                </div>
-              </td>
-            </tr>` : ''}
-            `
+  const selKw = selectedKws.find(k=>k.word===step4SelectedKw)
+  const selArt = step4SelectedKw ? c.articles.find(a=>a.keyword===step4SelectedKw) : null
+
+  // ── 左栏关键词列表 ──
+  const totalKws = selectedKws.length
+  const withArt  = selectedKws.filter(k=>c.articles.find(a=>a.keyword===k.word)).length
+  const pubCount  = c.articles.filter(a=>(a.publishedPlatforms||[]).length>0).length
+
+  const kwList = selectedKws.map(kw=>{
+    const art = c.articles.find(a=>a.keyword===kw.word)
+    const pp  = art?.publishedPlatforms||[]
+    const isActive = kw.word === step4SelectedKw
+    let dot='○', dotColor='#d1d5db', meta='未生成'
+    if(art && pp.length===0){ dot='◑'; dotColor='#f59e0b'; meta='草稿未发布' }
+    if(art && pp.length>0)  { dot='●'; dotColor='#10b981'; meta=`已发 ${pp.length} 平台` }
+    return `<div class="kw-item${isActive?' kw-active':''}" onclick="selectKwStep4('${kw.word.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">
+      <div class="kw-item-word">${kw.word}</div>
+      <div class="kw-item-meta"><span style="color:${dotColor}">${dot}</span> ${meta} · ${artLabel[kw.art_type]||kw.art_type}</div>
+    </div>`
+  }).join('')
+
+  // ── 右栏文章区域 ──
+  let mainPanel
+  if(!selKw){
+    mainPanel = `<div style="color:#9ca3af;text-align:center;padding:80px 20px;font-size:14px">← 从左侧选择一个关键词开始</div>`
+  } else if(!selArt){
+    mainPanel = `
+      <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:6px">${selKw.word}</div>
+      <div class="tip tip-purple" style="margin-bottom:16px">还没有文章，点击下方按钮让 AI 生成</div>
+      <button class="btn btn-primary" onclick="showGen('${c.id}','${selKw.word.replace(/'/g,"\\'")}','${selKw.art_type}')">✍️ AI 一键生成</button>
+    `
+  } else {
+    const artId = `body-${selArt.id}`
+    const pp = selArt.publishedPlatforms||[]
+    const versions = selArt.versions||[]
+
+    const platChips = ALL_PLATS.map(p=>{
+      const on = pp.includes(p)
+      return `<span class="pub-chip ${on?'pub-on':'pub-off'}" onclick="togglePublishPlatform('${c.id}','${selArt.id}','${p}')">
+        ${on?'✅':'○'} ${platLabel[p]}
+      </span>`
+    }).join('')
+
+    const verBar = versions.length>0 ? `
+      <div style="margin-top:14px;border-top:1px solid #f0f0f0;padding-top:10px">
+        <div style="font-size:11px;font-weight:700;color:#9ca3af;margin-bottom:6px">📁 历史版本（点击可恢复）</div>
+        <div class="ver-bar">
+          <span class="ver-btn ver-cur">当前版本</span>
+          ${[...versions].reverse().map((v,ri)=>{
+            const realIdx = versions.length-1-ri
+            return `<span class="ver-btn" onclick="restoreVersion('${c.id}','${selArt.id}',${realIdx})" title="${v.title||''}">v${realIdx+1} · ${v.savedAt||'历史'}</span>`
           }).join('')}
-        </tbody>
-      </table>
-    </div>
-  </div>
+        </div>
+      </div>` : ''
 
-  ${c.articles.length > 0 ? `
-  <div style="display:flex;justify-content:flex-end;margin-top:4px">
-    <button class="btn btn-primary" onclick="completeStep(4)">✅ 文章已发布，进入发布后复查 →</button>
-  </div>` : ''}
-  ${c.step>=5?`<div style="display:flex;justify-content:flex-end"><button class="btn btn-outline" onclick="gotoStep(5)">查看发布后复查 →</button></div>`:''}
+    mainPanel = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:4px">${selArt.title||selKw.word}</div>
+          <div style="font-size:11px;color:#9ca3af">${artLabel[selKw.art_type]||selKw.art_type}${versions.length>0?' · '+( versions.length+1)+' 个版本':' · 第 1 版'}</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button class="btn btn-green btn-sm" onclick="copyArticle('${artId}',this)">📋 复制</button>
+          <button class="btn btn-ghost btn-sm" onclick="humanizeArticle('${c.id}','${selArt.id}',this)">🧑 去AI味</button>
+          <button class="btn btn-primary btn-sm" onclick="showGen('${c.id}','${selKw.word.replace(/'/g,"\\'")}','${selKw.art_type}')">🔄 重新生成</button>
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">📣 发布状态（点击标记已发布平台）</div>
+      <div class="pub-tracks">${platChips}</div>
+
+      <div id="${artId}" data-raw="${(selArt.body||'').replace(/"/g,'&quot;').replace(/\n/g,'\\n')}" style="display:none"></div>
+      <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap;max-height:400px;overflow-y:auto">${stripMarkdown(selArt.body||'')}</div>
+      ${verBar}
+    `
+  }
+
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:12px;color:#9ca3af">${totalKws} 个关键词 · <span style="color:#f59e0b;font-weight:600">${withArt} 篇已生成</span> · <span style="color:#10b981;font-weight:600">${pubCount} 篇已发布</span></div>
+    <div style="font-size:11px;color:#9ca3af">搜狐标题去掉"推荐/靠谱" · 禁止写保就业/包过/保证效果</div>
+  </div>
+  <div class="kw-split">
+    <div class="kw-sidebar">
+      <div style="font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:1px;padding:4px 6px 8px;text-transform:uppercase">关键词</div>
+      ${kwList}
+    </div>
+    <div class="kw-main">${mainPanel}</div>
+  </div>
+  ${withArt>0?`<div style="display:flex;justify-content:flex-end;margin-top:10px">
+    <button class="btn btn-primary" onclick="completeStep(4)">✅ 进入发布后复查 →</button>
+  </div>`:''}
+  ${c.step>=5?`<div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="btn btn-outline" onclick="gotoStep(5)">查看发布后复查 →</button></div>`:''}
   `
+}
+
+function selectKwStep4(word){
+  step4SelectedKw = word
+  renderStep(4)
+}
+
+function togglePublishPlatform(clientId, artId, platform){
+  const c = DB.clients[clientId]
+  const art = c.articles.find(a=>a.id===artId)
+  if(!art) return
+  if(!art.publishedPlatforms) art.publishedPlatforms=[]
+  const idx = art.publishedPlatforms.indexOf(platform)
+  if(idx>=0) art.publishedPlatforms.splice(idx,1)
+  else art.publishedPlatforms.push(platform)
+  DB.save()
+  renderStep(4)
+}
+
+function restoreVersion(clientId, artId, vIdx){
+  const c = DB.clients[clientId]
+  const art = c.articles.find(a=>a.id===artId)
+  if(!art||!art.versions||art.versions[vIdx]===undefined) return
+  if(!art.versions) art.versions=[]
+  // 当前内容存入版本
+  art.versions.push({title:art.title, body:art.body, savedAt:new Date().toISOString().slice(0,10)})
+  const ver = art.versions[vIdx]
+  art.title = ver.title
+  art.body  = ver.body
+  art.versions.splice(vIdx,1)
+  DB.save()
+  renderStep(4)
 }
 
 // ══════════════════════════════════════════════
@@ -2169,11 +2262,21 @@ function saveFromGen(){
   if(!title||!body){ alert('请先生成或填写文章内容'); return }
   const c = DB.clients[clientId]
   const kw = c.keywords.find(k=>k.word===keyword)
-  // 更新或新增
-  const existing = c.articles.findIndex(a=>a.keyword===keyword)
-  const article = { id:'a_'+Date.now(), title, body, keyword, type:artType, platforms:kw?.platforms||['toutiao'], status:'ready' }
-  if(existing>=0) c.articles[existing] = article
-  else c.articles.push(article)
+  const existingIdx = c.articles.findIndex(a=>a.keyword===keyword)
+  if(existingIdx>=0){
+    // 有旧文章：把旧内容存入版本历史，保留发布状态
+    const old = c.articles[existingIdx]
+    if(!old.versions) old.versions=[]
+    old.versions.push({title:old.title, body:old.body, savedAt:new Date().toISOString().slice(0,10)})
+    old.title  = title
+    old.body   = body
+    old.type   = artType
+    old.status = 'ready'
+    // publishedPlatforms 保留不清空
+  } else {
+    c.articles.push({id:'a_'+Date.now(), title, body, keyword, type:artType, platforms:kw?.platforms||['toutiao'], status:'ready', publishedPlatforms:[], versions:[]})
+  }
+  step4SelectedKw = keyword   // 自动跳到这个关键词
   DB.save()
   closeGen()
   renderStep(4)
