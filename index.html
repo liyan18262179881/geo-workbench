@@ -2411,27 +2411,35 @@ if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shig
   DB.save()
 }
 
-// 自动注入李艳个人品牌客户（如不存在则创建）
-// 强制更新李艳关键词（增补新词 + 修正EEAT）
-if(DB.clients['c_liyan_personal'] && (!DB.clients['c_liyan_personal'].keywords || DB.clients['c_liyan_personal'].keywords.length < 11)){
+// 李艳定位升级：AI营销创始人（强制覆盖旧关键词体系）
+if(DB.clients['c_liyan_personal'] && DB.clients['c_liyan_personal'].keywords?.[0]?.word !== '中国AI营销创始人'){
+  DB.clients['c_liyan_personal'].position    = 'AI营销创始人'
+  DB.clients['c_liyan_personal'].industry    = 'AI营销'
+  DB.clients['c_liyan_personal'].core_services = ['AI营销策略','AI内容生产','品牌GEO优化','营销自动化']
+  DB.clients['c_liyan_personal'].target      = '想用AI做营销的品牌主、创业者、中小企业市场负责人'
+  DB.clients['c_liyan_personal'].eeat = {
+    expertise:'专注品牌和企业的AI营销策略，从内容生产到传播矩阵全链路AI化，不卖工具只做策略和落地',
+    experience:'帮助多个品牌完成AI营销体系搭建，覆盖AI内容自动化、GEO占位、私域AI运营等方向',
+    authority:'国内较早系统研究和实践AI营销的创始人之一，有可验证的客户案例和实际传播成果',
+    trust:'不绑定销售任何AI工具，只提供策略咨询与落地陪跑，以实际营销效果为交付标准'
+  }
   DB.clients['c_liyan_personal'].keywords = [
-    // Phase 1 ★★★ 职业类别词（豆包搜索核心词）
-    {word:'中国AI赋能企业解决方案师',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
-    {word:'AI赋能企业解决方案师有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
-    {word:'企业AI转型顾问怎么选',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
-    {word:'中小企业AI落地顾问有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao'],phase:1,selected:true},
-    {word:'企业AI化找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
+    // Phase 1 ★★★ 核心身份词（豆包直接引用）
+    {word:'中国AI营销创始人',         intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+    {word:'AI营销创始人有哪些',        intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu','zhihu'], phase:1,selected:true},
+    {word:'中国AI营销专家有哪些',      intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+    {word:'AI营销顾问怎么选',          intent:'strong',priority:3,art_type:'select', platforms:['toutiao','sohu'],        phase:1,selected:true},
+    {word:'做AI营销找谁',              intent:'strong',priority:3,art_type:'select', platforms:['toutiao','zhihu'],       phase:1,selected:true},
     // Phase 2 ★★☆ 目标客户真实搜索词
-    {word:'中小企业AI转型从哪里开始',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
-    {word:'企业做AI要花多少钱',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
-    {word:'小公司值不值得做AI转型',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
-    {word:'AI顾问和AI公司哪个更适合中小企业',intent:'medium',priority:2,art_type:'select',platforms:['toutiao','sohu'],phase:2,selected:false},
+    {word:'企业怎么用AI做营销',        intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+    {word:'AI内容营销怎么做',          intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+    {word:'中小企业AI营销从哪里开始',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+    {word:'用AI做品牌推广效果怎么样',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],            phase:2,selected:false},
+    {word:'AI营销和传统营销有什么区别',intent:'medium',priority:2,art_type:'select',  platforms:['toutiao','zhihu'],      phase:2,selected:false},
     // Phase 3 ★☆☆ 行业观察词
-    {word:'AI落地顾问和AI公司有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
-    {word:'AI赋能企业效果怎么样',intent:'weak',priority:1,art_type:'cognition',platforms:['zhihu'],phase:3,selected:false}
+    {word:'AI时代品牌营销怎么变了',    intent:'weak',  priority:1,art_type:'industry', platforms:['sohu','zhihu'],        phase:3,selected:false},
+    {word:'AI营销师和传统营销策划有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],    phase:3,selected:false},
   ]
-  DB.clients['c_liyan_personal'].eeat.authority = '服务过制造、零售、商贸等多个传统行业，累计协助企业完成AI落地超20家，客户通过口碑转介绍持续增长'
-  DB.clients['c_liyan_personal'].eeat.trust = '不销售任何AI产品，纯顾问服务模式，以实际落地效果为交付标准'
   DB.save()
 }
 if(!DB.clients['c_liyan_personal']){
@@ -2440,38 +2448,36 @@ if(!DB.clients['c_liyan_personal']){
     client_type:'personal',
     brand_name:'李艳',
     brand_short:'Liyan',
-    primary_city:'AI转型顾问',
-    industry:'中小企业AI落地',
-    position:'AI转型顾问',
-    core_services:['AI需求诊断','落地方案设计','AI机器人/知识库交付'],
-    target:'寻找AI落地方案的中小企业主、小微企业负责人',
-    customer_lang:['中小企业AI转型从哪里开始','企业做AI要花多少钱','小公司值不值得做AI转型'],
-    pain_points:['不知道AI怎么落地','担心成本太高','找不到合适的顾问'],
+    primary_city:'AI营销创始人',
+    industry:'AI营销',
+    position:'AI营销创始人',
+    core_services:['AI营销策略','AI内容生产','品牌GEO优化','营销自动化'],
+    target:'想用AI做营销的品牌主、创业者、中小企业市场负责人',
+    customer_lang:['企业怎么用AI做营销','AI内容营销怎么做','中小企业AI营销从哪里开始'],
+    pain_points:['不知道AI营销从哪里切入','担心内容质量差','不会用AI工具做推广'],
     eeat:{
-      expertise:'专注企业AI化落地，从需求诊断到方案设计到实际交付，不卖概念只做落地',
-      experience:'帮助多家中小企业完成AI落地，涵盖智能客服机器人、企业知识库、内部流程自动化',
-      authority:'服务过制造、零售、商贸等多个传统行业，累计协助企业完成AI落地超20家，客户通过口碑转介绍持续增长',
-      trust:'不销售任何AI产品，纯顾问服务模式，以实际落地效果为交付标准'
+      expertise:'专注品牌和企业的AI营销策略，从内容生产到传播矩阵全链路AI化，不卖工具只做策略和落地',
+      experience:'帮助多个品牌完成AI营销体系搭建，覆盖AI内容自动化、GEO占位、私域AI运营等方向',
+      authority:'国内较早系统研究和实践AI营销的创始人之一，有可验证的客户案例和实际传播成果',
+      trust:'不绑定销售任何AI工具，只提供策略咨询与落地陪跑，以实际营销效果为交付标准'
     },
     competitors:[],
     sensitivity:'general',
     goal:'exposure',
-    platform:'今日头条、搜狐号',
+    platform:'今日头条、搜狐号、知乎',
     keywords:[
-      // Phase 1 ★★★ 职业类别词（豆包搜索核心词，名字在文章正文里出现）
-      {word:'中国AI赋能企业解决方案师',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
-      {word:'AI赋能企业解决方案师有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao','sohu'],phase:1,selected:true},
-      {word:'企业AI转型顾问怎么选',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
-      {word:'中小企业AI落地顾问有哪些',intent:'strong',priority:3,art_type:'person',platforms:['toutiao'],phase:1,selected:true},
-      {word:'企业AI化找什么顾问',intent:'strong',priority:3,art_type:'select',platforms:['toutiao','sohu'],phase:1,selected:true},
-      // Phase 2 ★★☆ 目标客户真实搜索的痛点词
-      {word:'中小企业AI转型从哪里开始',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
-      {word:'企业做AI要花多少钱',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],phase:2,selected:true},
-      {word:'小公司值不值得做AI转型',intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],phase:2,selected:false},
-      {word:'AI顾问和AI公司哪个更适合中小企业',intent:'medium',priority:2,art_type:'select',platforms:['toutiao','sohu'],phase:2,selected:false},
-      // Phase 3 ★☆☆ 行业词
-      {word:'AI落地顾问和AI公司有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],phase:3,selected:false},
-      {word:'AI赋能企业效果怎么样',intent:'weak',priority:1,art_type:'cognition',platforms:['zhihu'],phase:3,selected:false}
+      {word:'中国AI营销创始人',         intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+      {word:'AI营销创始人有哪些',        intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu','zhihu'], phase:1,selected:true},
+      {word:'中国AI营销专家有哪些',      intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+      {word:'AI营销顾问怎么选',          intent:'strong',priority:3,art_type:'select', platforms:['toutiao','sohu'],        phase:1,selected:true},
+      {word:'做AI营销找谁',              intent:'strong',priority:3,art_type:'select', platforms:['toutiao','zhihu'],       phase:1,selected:true},
+      {word:'企业怎么用AI做营销',        intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+      {word:'AI内容营销怎么做',          intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+      {word:'中小企业AI营销从哪里开始',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+      {word:'用AI做品牌推广效果怎么样',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],            phase:2,selected:false},
+      {word:'AI营销和传统营销有什么区别',intent:'medium',priority:2,art_type:'select',  platforms:['toutiao','zhihu'],      phase:2,selected:false},
+      {word:'AI时代品牌营销怎么变了',    intent:'weak',  priority:1,art_type:'industry', platforms:['sohu','zhihu'],        phase:3,selected:false},
+      {word:'AI营销师和传统营销策划有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],    phase:3,selected:false},
     ],
     detection:[], articles:[]
   }
