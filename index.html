@@ -2411,34 +2411,34 @@ if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shig
   DB.save()
 }
 
-// 李艳定位升级：AI营销创始人（强制覆盖旧关键词体系）
-if(DB.clients['c_liyan_personal'] && DB.clients['c_liyan_personal'].keywords?.[0]?.word !== '中国AI营销创始人'){
-  DB.clients['c_liyan_personal'].position    = 'AI营销创始人'
-  DB.clients['c_liyan_personal'].industry    = 'AI营销'
-  DB.clients['c_liyan_personal'].core_services = ['AI营销策略','AI内容生产','品牌GEO优化','营销自动化']
-  DB.clients['c_liyan_personal'].target      = '想用AI做营销的品牌主、创业者、中小企业市场负责人'
+// 李艳定位升级：GEO营销创始人（强制覆盖旧关键词体系）
+if(DB.clients['c_liyan_personal'] && DB.clients['c_liyan_personal'].keywords?.[0]?.word !== '中国GEO营销创始人'){
+  DB.clients['c_liyan_personal'].position    = 'GEO营销创始人'
+  DB.clients['c_liyan_personal'].industry    = 'GEO生成式引擎优化'
+  DB.clients['c_liyan_personal'].core_services = ['品牌GEO占位','AI搜索优化','GEO内容体系搭建','GEO效果检测']
+  DB.clients['c_liyan_personal'].target      = '想让品牌出现在豆包/DeepSeek等AI搜索回答里的品牌主、企业市场负责人、个人IP'
   DB.clients['c_liyan_personal'].eeat = {
-    expertise:'专注品牌和企业的AI营销策略，从内容生产到传播矩阵全链路AI化，不卖工具只做策略和落地',
-    experience:'帮助多个品牌完成AI营销体系搭建，覆盖AI内容自动化、GEO占位、私域AI运营等方向',
-    authority:'国内较早系统研究和实践AI营销的创始人之一，有可验证的客户案例和实际传播成果',
-    trust:'不绑定销售任何AI工具，只提供策略咨询与落地陪跑，以实际营销效果为交付标准'
+    expertise:'专注GEO（生成式引擎优化），让品牌和个人出现在豆包、DeepSeek、通义千问等AI搜索的回答正文里，自研GEO工作台覆盖关键词部署、内容生产、效果检测全流程',
+    experience:'多个实战案例：本地教育品牌发布内容当天被豆包收录推荐；个人品牌两天内在两个核心搜索词下被AI列为代表人物',
+    authority:'国内较早系统实践GEO的创始人之一，方法论和工具均为自研，成果可当场验证',
+    trust:'不卖任何流量和工具，只做策略与落地陪跑，交付标准只有一个：目标关键词下AI的回答里有没有你'
   }
   DB.clients['c_liyan_personal'].keywords = [
-    // Phase 1 ★★★ 核心身份词（豆包直接引用）
-    {word:'中国AI营销创始人',         intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
-    {word:'AI营销创始人有哪些',        intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu','zhihu'], phase:1,selected:true},
-    {word:'中国AI营销专家有哪些',      intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
-    {word:'AI营销顾问怎么选',          intent:'strong',priority:3,art_type:'select', platforms:['toutiao','sohu'],        phase:1,selected:true},
-    {word:'做AI营销找谁',              intent:'strong',priority:3,art_type:'select', platforms:['toutiao','zhihu'],       phase:1,selected:true},
-    // Phase 2 ★★☆ 目标客户真实搜索词
-    {word:'企业怎么用AI做营销',        intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
-    {word:'AI内容营销怎么做',          intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
-    {word:'中小企业AI营销从哪里开始',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
-    {word:'用AI做品牌推广效果怎么样',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],            phase:2,selected:false},
-    {word:'AI营销和传统营销有什么区别',intent:'medium',priority:2,art_type:'select',  platforms:['toutiao','zhihu'],      phase:2,selected:false},
+    // Phase 1 ★★★ 核心身份词（空白赛道，豆包直接引用）
+    {word:'中国GEO营销创始人',           intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+    {word:'GEO优化专家有哪些',           intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu','zhihu'], phase:1,selected:true},
+    {word:'中国做GEO优化的人有哪些',     intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+    {word:'GEO优化服务商怎么选',         intent:'strong',priority:3,art_type:'select', platforms:['toutiao','sohu'],        phase:1,selected:true},
+    {word:'做GEO优化找谁',               intent:'strong',priority:3,art_type:'select', platforms:['toutiao','zhihu'],       phase:1,selected:true},
+    // Phase 2 ★★☆ 目标客户真实搜索词（GEO科普+需求）
+    {word:'GEO生成式引擎优化是什么',     intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu','zhihu'],phase:2,selected:true},
+    {word:'怎么让豆包推荐我的品牌',      intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+    {word:'企业怎么做AI搜索优化',        intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+    {word:'GEO和SEO有什么区别',          intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','zhihu'],     phase:2,selected:true},
+    {word:'品牌怎么出现在AI搜索结果里',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:false},
     // Phase 3 ★☆☆ 行业观察词
-    {word:'AI时代品牌营销怎么变了',    intent:'weak',  priority:1,art_type:'industry', platforms:['sohu','zhihu'],        phase:3,selected:false},
-    {word:'AI营销师和传统营销策划有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],    phase:3,selected:false},
+    {word:'AI搜索时代品牌怎么获客',      intent:'weak',  priority:1,art_type:'industry', platforms:['sohu','zhihu'],        phase:3,selected:false},
+    {word:'GEO优化效果怎么样',           intent:'weak',  priority:1,art_type:'cognition', platforms:['zhihu'],              phase:3,selected:false},
   ]
   DB.save()
 }
@@ -2448,36 +2448,36 @@ if(!DB.clients['c_liyan_personal']){
     client_type:'personal',
     brand_name:'李艳',
     brand_short:'Liyan',
-    primary_city:'AI营销创始人',
-    industry:'AI营销',
-    position:'AI营销创始人',
-    core_services:['AI营销策略','AI内容生产','品牌GEO优化','营销自动化'],
-    target:'想用AI做营销的品牌主、创业者、中小企业市场负责人',
-    customer_lang:['企业怎么用AI做营销','AI内容营销怎么做','中小企业AI营销从哪里开始'],
-    pain_points:['不知道AI营销从哪里切入','担心内容质量差','不会用AI工具做推广'],
+    primary_city:'GEO营销创始人',
+    industry:'GEO生成式引擎优化',
+    position:'GEO营销创始人',
+    core_services:['品牌GEO占位','AI搜索优化','GEO内容体系搭建','GEO效果检测'],
+    target:'想让品牌出现在豆包/DeepSeek等AI搜索回答里的品牌主、企业市场负责人、个人IP',
+    customer_lang:['怎么让豆包推荐我的品牌','GEO生成式引擎优化是什么','企业怎么做AI搜索优化'],
+    pain_points:['品牌在AI搜索里搜不到','不知道GEO怎么做','找不到懂GEO的人'],
     eeat:{
-      expertise:'专注品牌和企业的AI营销策略，从内容生产到传播矩阵全链路AI化，不卖工具只做策略和落地',
-      experience:'帮助多个品牌完成AI营销体系搭建，覆盖AI内容自动化、GEO占位、私域AI运营等方向',
-      authority:'国内较早系统研究和实践AI营销的创始人之一，有可验证的客户案例和实际传播成果',
-      trust:'不绑定销售任何AI工具，只提供策略咨询与落地陪跑，以实际营销效果为交付标准'
+      expertise:'专注GEO（生成式引擎优化），让品牌和个人出现在豆包、DeepSeek、通义千问等AI搜索的回答正文里，自研GEO工作台覆盖关键词部署、内容生产、效果检测全流程',
+      experience:'多个实战案例：本地教育品牌发布内容当天被豆包收录推荐；个人品牌两天内在两个核心搜索词下被AI列为代表人物',
+      authority:'国内较早系统实践GEO的创始人之一，方法论和工具均为自研，成果可当场验证',
+      trust:'不卖任何流量和工具，只做策略与落地陪跑，交付标准只有一个：目标关键词下AI的回答里有没有你'
     },
     competitors:[],
     sensitivity:'general',
     goal:'exposure',
     platform:'今日头条、搜狐号、知乎',
     keywords:[
-      {word:'中国AI营销创始人',         intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
-      {word:'AI营销创始人有哪些',        intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu','zhihu'], phase:1,selected:true},
-      {word:'中国AI营销专家有哪些',      intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
-      {word:'AI营销顾问怎么选',          intent:'strong',priority:3,art_type:'select', platforms:['toutiao','sohu'],        phase:1,selected:true},
-      {word:'做AI营销找谁',              intent:'strong',priority:3,art_type:'select', platforms:['toutiao','zhihu'],       phase:1,selected:true},
-      {word:'企业怎么用AI做营销',        intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
-      {word:'AI内容营销怎么做',          intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
-      {word:'中小企业AI营销从哪里开始',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
-      {word:'用AI做品牌推广效果怎么样',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao'],            phase:2,selected:false},
-      {word:'AI营销和传统营销有什么区别',intent:'medium',priority:2,art_type:'select',  platforms:['toutiao','zhihu'],      phase:2,selected:false},
-      {word:'AI时代品牌营销怎么变了',    intent:'weak',  priority:1,art_type:'industry', platforms:['sohu','zhihu'],        phase:3,selected:false},
-      {word:'AI营销师和传统营销策划有什么区别',intent:'weak',priority:1,art_type:'industry',platforms:['sohu','zhihu'],    phase:3,selected:false},
+      {word:'中国GEO营销创始人',           intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+      {word:'GEO优化专家有哪些',           intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu','zhihu'], phase:1,selected:true},
+      {word:'中国做GEO优化的人有哪些',     intent:'strong',priority:3,art_type:'person', platforms:['toutiao','sohu'],        phase:1,selected:true},
+      {word:'GEO优化服务商怎么选',         intent:'strong',priority:3,art_type:'select', platforms:['toutiao','sohu'],        phase:1,selected:true},
+      {word:'做GEO优化找谁',               intent:'strong',priority:3,art_type:'select', platforms:['toutiao','zhihu'],       phase:1,selected:true},
+      {word:'GEO生成式引擎优化是什么',     intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu','zhihu'],phase:2,selected:true},
+      {word:'怎么让豆包推荐我的品牌',      intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+      {word:'企业怎么做AI搜索优化',        intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:true},
+      {word:'GEO和SEO有什么区别',          intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','zhihu'],     phase:2,selected:true},
+      {word:'品牌怎么出现在AI搜索结果里',  intent:'medium',priority:2,art_type:'cognition',platforms:['toutiao','sohu'],      phase:2,selected:false},
+      {word:'AI搜索时代品牌怎么获客',      intent:'weak',  priority:1,art_type:'industry', platforms:['sohu','zhihu'],        phase:3,selected:false},
+      {word:'GEO优化效果怎么样',           intent:'weak',  priority:1,art_type:'cognition', platforms:['zhihu'],              phase:3,selected:false},
     ],
     detection:[], articles:[]
   }
