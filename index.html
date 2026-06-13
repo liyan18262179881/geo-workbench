@@ -1863,18 +1863,45 @@ function formatBody(text){
     .join('')
 }
 
-// 直接从数据复制正文（最可靠：无中间转义环节）
+// 直接从数据复制正文（最可靠：无中间转义环节 + 降级方案）
 function copyArticleBody(clientId, articleId, btn){
   const c = DB.clients[clientId]
   const art = c?.articles.find(a=>a.id===articleId)
   if(!art){ return }
-  // 还原历史可能残留的字面量 \n，再去Markdown
-  let body = (art.body||'').replace(/\\n/g, '\n')
+  // 归一化各种换行表示：字面量 \n、回车换行，统一成真正的换行
+  let body = (art.body||'')
+    .replace(/\\r\\n/g, '\n')   // 字面量 \r\n
+    .replace(/\\n/g, '\n')      // 字面量 \n
+    .replace(/\r\n/g, '\n')     // 真实 \r\n
+    .replace(/\r/g, '\n')       // 真实 \r
   body = stripMarkdown(body).trim()
-  navigator.clipboard.writeText(body).then(()=>{
-    btn.classList.add('copied'); btn.textContent='✅ 已复制'
-    setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='📋 复制' },2500)
-  })
+  copyTextRobust(body, btn)
+}
+
+// 通用复制：优先 navigator.clipboard，失败则降级到 execCommand
+function copyTextRobust(text, btn){
+  const ok = ()=>{ if(btn){ btn.classList.add('copied'); const old=btn.textContent; btn.textContent='✅ 已复制'; setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='📋 复制' },2500) } }
+  const fail = ()=>{ if(btn){ btn.textContent='❌ 复制失败'; setTimeout(()=>{ btn.textContent='📋 复制' },2500) } }
+  // 方案1：现代剪贴板 API
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(ok).catch(()=>{ if(!fallbackCopy(text)) fail(); else ok() })
+    return
+  }
+  // 方案2：降级
+  if(fallbackCopy(text)) ok(); else fail()
+}
+
+function fallbackCopy(text){
+  try{
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none'
+    document.body.appendChild(ta)
+    ta.focus(); ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  }catch(e){ return false }
 }
 
 // ── 辅助 ──
