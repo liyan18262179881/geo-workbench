@@ -1381,14 +1381,13 @@ function renderArticles(c){
           <div style="font-size:11px;color:#9ca3af">${artLabel[selKw.art_type]||selKw.art_type} · 共 ${totalVer} 个版本</div>
         </div>
         <div style="display:flex;gap:5px;flex-shrink:0">
-          <button class="btn btn-green btn-sm" onclick="copyArticle('${artId}',this)">📋 复制</button>
+          <button class="btn btn-green btn-sm" onclick="copyArticleBody('${c.id}','${selArt.id}',this)">📋 复制</button>
           <button class="btn btn-ghost btn-sm" onclick="humanizeArticle('${c.id}','${selArt.id}',this)">🧑 去AI味</button>
           <button class="btn btn-primary btn-sm" onclick="showGen('${c.id}','${selKw.word.replace(/'/g,"\\'")}','${selKw.art_type}')">🔄 重新生成</button>
         </div>
       </div>
       <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">📣 已发布平台（点击切换）</div>
       <div class="pub-tracks">${platChips}</div>
-      <div id="${artId}" data-raw="${(selArt.body||'').replace(/"/g,'&quot;').replace(/\n/g,'\\n')}" style="display:none"></div>
       <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap;max-height:75vh;overflow-y:auto">${stripMarkdown(selArt.body||'')}</div>
     `
 
@@ -1864,14 +1863,17 @@ function formatBody(text){
     .join('')
 }
 
-function copyArticle(bodyId, btn){
-  const el = document.getElementById(bodyId)
-  // data-raw 里换行被转义成了字面量 \n，复制前要还原成真正的换行
-  const unescaped = (el?.dataset.raw || '').replace(/\\n/g, '\n')
-  const raw = stripMarkdown(unescaped).trim()
-  navigator.clipboard.writeText(raw).then(()=>{
+// 直接从数据复制正文（最可靠：无中间转义环节）
+function copyArticleBody(clientId, articleId, btn){
+  const c = DB.clients[clientId]
+  const art = c?.articles.find(a=>a.id===articleId)
+  if(!art){ return }
+  // 还原历史可能残留的字面量 \n，再去Markdown
+  let body = (art.body||'').replace(/\\n/g, '\n')
+  body = stripMarkdown(body).trim()
+  navigator.clipboard.writeText(body).then(()=>{
     btn.classList.add('copied'); btn.textContent='✅ 已复制'
-    setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='📋 复制正文' },2500)
+    setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='📋 复制' },2500)
   })
 }
 
