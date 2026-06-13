@@ -1866,7 +1866,9 @@ function formatBody(text){
 
 function copyArticle(bodyId, btn){
   const el = document.getElementById(bodyId)
-  const raw = stripMarkdown(el?.dataset.raw || '').trim()
+  // data-raw 里换行被转义成了字面量 \n，复制前要还原成真正的换行
+  const unescaped = (el?.dataset.raw || '').replace(/\\n/g, '\n')
+  const raw = stripMarkdown(unescaped).trim()
   navigator.clipboard.writeText(raw).then(()=>{
     btn.classList.add('copied'); btn.textContent='✅ 已复制'
     setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent='📋 复制正文' },2500)
