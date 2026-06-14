@@ -1929,7 +1929,23 @@ function copyArticleBody(clientId, articleId, btn){
     .filter(s => s)             // 去掉空段落
     .join('\n\n')               // 段落之间统一空一行
     .trim()
+  // 自动在正文末尾带上话题标签，发布时一次粘贴搞定
+  const tags = buildHashtags(art.keyword, clientId)
+  if(tags) body = body + '\n\n' + tags
   copyTextRobust(body, btn)
+}
+
+// 生成话题标签字符串：主关键词 + 最多3个其他已选关键词
+function buildHashtags(keyword, clientId){
+  const cl = DB.clients[clientId]
+  const tags = keyword ? ['#'+keyword] : []
+  if(cl && cl.keywords){
+    cl.keywords
+      .filter(k => k.word !== keyword && k.phase <= 2 && k.selected)
+      .slice(0, 3)
+      .forEach(k => tags.push('#' + k.word))
+  }
+  return tags.join(' ')
 }
 
 // 通用复制：优先 navigator.clipboard，失败则降级到 execCommand
