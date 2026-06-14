@@ -1921,7 +1921,14 @@ function copyArticleBody(clientId, articleId, btn){
     .replace(/\\n/g, '\n')      // 字面量 \n
     .replace(/\r\n/g, '\n')     // 真实 \r\n
     .replace(/\r/g, '\n')       // 真实 \r
-  body = stripMarkdown(body).trim()
+  body = stripMarkdown(body)
+  // 关键：每个段落之间留一个空行（\n\n），头条/搜狐/知乎才会正确分段
+  body = body
+    .split(/\n+/)               // 按任意连续换行切成段落
+    .map(s => s.trim())
+    .filter(s => s)             // 去掉空段落
+    .join('\n\n')               // 段落之间统一空一行
+    .trim()
   copyTextRobust(body, btn)
 }
 
