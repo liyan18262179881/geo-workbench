@@ -253,6 +253,8 @@ textarea{resize:vertical;min-height:70px}
   <div class="topbar-sub">本地生活 · B端客户系统</div>
   <div class="topbar-spacer"></div>
   <div class="method-tag">📖 基于 GEO 自动化方法论</div>
+  <div id="db-status" title="数据存储状态" style="font-size:12px;color:#9ca3af">🗄️ …</div>
+  <a href="http://localhost:8765/api/export" title="下载数据备份（JSON）" style="font-size:12px;color:#4b5563;text-decoration:none;cursor:pointer">⬇️ 导出备份</a>
   <div id="server-status" style="font-size:12px;color:#4b5563;cursor:pointer" onclick="showSettings()">⚙️ 设置</div>
 </div>
 
@@ -661,11 +663,56 @@ textarea{resize:vertical;min-height:70px}
 // ══════════════════════════════════════════════
 const DB = {
   clients: {},
-  save(){ localStorage.setItem('geo_v2_clients', JSON.stringify(this.clients)) },
-  load(){
-    const d = localStorage.getItem('geo_v2_clients')
-    if(d) this.clients = JSON.parse(d)
-    if(!this.clients['shiguang']) this._loadDemo()
+  _saveTimer: null,
+  _syncOk: null,        // null=未知 true=已同步到数据库 false=同步失败
+  _srv(){ return (typeof SETTINGS!=='undefined' && SETTINGS.serverUrl) || 'http://localhost:8765' },
+  save(){
+    // 1) 立即写本地：即时、断网也不丢
+    try{ localStorage.setItem('geo_v2_clients', JSON.stringify(this.clients)) }catch(e){}
+    // 2) 防抖推送到服务器数据库（权威存储，落盘）
+    clearTimeout(this._saveTimer)
+    this._saveTimer = setTimeout(()=> this._pushToServer(), 400)
+  },
+  async _pushToServer(){
+    if(!this.clients || !Object.keys(this.clients).length) return
+    try{
+      const r = await fetch(this._srv()+'/api/db', {
+        method:'POST', mode:'cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({clients: this.clients})
+      })
+      this._syncOk = r.ok
+    }catch(e){ this._syncOk = false }
+    if(typeof updateDbStatus==='function') updateDbStatus()
+  },
+  async load(){
+    // 优先从数据库读
+    try{
+      const r = await fetch(this._srv()+'/api/db', {mode:'cors'})
+      const data = await r.json()
+      if(data && data.clients && Object.keys(data.clients).length){
+        this.clients = data.clients
+        try{ localStorage.setItem('geo_v2_clients', JSON.stringify(this.clients)) }catch(e){}
+        this._syncOk = true
+        return
+      }
+      // 数据库为空：若浏览器有旧数据，自动迁移进数据库
+      const local = localStorage.getItem('geo_v2_clients')
+      if(local){
+        this.clients = JSON.parse(local)
+        await this._pushToServer()
+        return
+      }
+      // 都没有：装载示例并入库
+      this._loadDemo()
+      await this._pushToServer()
+    }catch(e){
+      // 服务器连不上：退回本地存储，保证仍能用
+      const local = localStorage.getItem('geo_v2_clients')
+      if(local) this.clients = JSON.parse(local)
+      if(!this.clients['shiguang']) this._loadDemo()
+      this._syncOk = false
+    }
   },
   _loadDemo(){
     this.clients['shiguang'] = {
@@ -2012,6 +2059,15 @@ async function updateServerStatus(){
     el.textContent = '⚙️ 设置'
     el.style.color = '#4b5563'
   }
+  updateDbStatus()
+}
+
+function updateDbStatus(){
+  const el = document.getElementById('db-status')
+  if(!el) return
+  if(DB._syncOk === true){ el.textContent = '🗄️ 已存入数据库'; el.style.color = '#22c55e' }
+  else if(DB._syncOk === false){ el.textContent = '⚠️ 仅本地（数据库未连接）'; el.style.color = '#f59e0b' }
+  else { el.textContent = '🗄️ …'; el.style.color = '#9ca3af' }
 }
 
 // ══════════════════════════════════════════════
@@ -2409,7 +2465,8 @@ function showPrompt(clientId, keyword, artType){
 // ══════════════════════════════════════════════
 // 初始化
 // ══════════════════════════════════════════════
-DB.load()
+;(async function init(){
+await DB.load()
 
 // ── 拾光伴学关键词扩充（含暑假补课场景词）──
 if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shiguang'].keywords.length < 36){
@@ -2518,6 +2575,7 @@ if(!DB.clients['c_liyan_personal']){
 renderSidebar()
 renderHome()
 updateServerStatus()
+})()
 </script>
 </body>
 </html>

@@ -2,3 +2,10 @@
 __pycache__/
 *.pyc
 .env
+# 本地数据库（含客户数据，不上传公开仓库）
+geo.db
+geo.db-journal
+geo.db-wal
+# 数据备份
+geo-backup-*.json
+.claude/launch.json

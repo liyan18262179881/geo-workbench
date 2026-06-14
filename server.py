@@ -3,8 +3,31 @@ GEO 工作台本地服务
 启动方式：python3 server.py
 访问地址：http://localhost:8765
 """
-import os, json
+import os, json, sqlite3
+from datetime import datetime
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+# ── SQLite 数据库（数据落盘，不再只存浏览器）──
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'geo.db')
+
+def get_conn():
+    conn = sqlite3.connect(DB_PATH)
+    return conn
+
+def init_db():
+    conn = get_conn()
+    # 每个客户一行（关键词/文章/检测都在该客户的 data 里，天然按人隔离）
+    # owner_id 预留：现在固定 'local'，将来做多账号时直接用它隔离数据
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS clients (
+            id         TEXT PRIMARY KEY,
+            owner_id   TEXT DEFAULT 'local',
+            data       TEXT NOT NULL,
+            updated_at TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
 # 支持的平台配置
 PROVIDERS = {
@@ -137,16 +160,70 @@ class GEOHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == '/api/status':
-            self._json(200, {'ok': True, 'providers': list(PROVIDERS.keys())})
+            self._json(200, {'ok': True, 'providers': list(PROVIDERS.keys()), 'db': True})
             return
         if self.path == '/api/providers':
             self._json(200, PROVIDERS)
             return
+        # 读取全部客户数据
+        if self.path == '/api/db':
+            self._json(200, {'clients': self._read_all_clients()})
+            return
+        # 导出备份（浏览器直接下载 json 文件）
+        if self.path == '/api/export':
+            payload = json.dumps({'clients': self._read_all_clients()}, ensure_ascii=False, indent=2).encode('utf-8')
+            self.send_response(200)
+            self._cors()
+            fname = 'geo-backup-' + datetime.now().strftime('%Y%m%d-%H%M%S') + '.json'
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Disposition', f'attachment; filename="{fname}"')
+            self.send_header('Content-Length', len(payload))
+            self.end_headers()
+            self.wfile.write(payload)
+            return
         super().do_GET()
+
+    def _read_all_clients(self):
+        conn = get_conn()
+        rows = conn.execute('SELECT id, data FROM clients').fetchall()
+        conn.close()
+        clients = {}
+        for cid, data in rows:
+            try:
+                clients[cid] = json.loads(data)
+            except Exception:
+                pass
+        return clients
 
     def do_POST(self):
         length = int(self.headers.get('Content-Length', 0))
         body = json.loads(self.rfile.read(length))
+
+        # 保存全部客户数据（每个客户一行，整体同步）
+        if self.path == '/api/db':
+            incoming = body.get('clients')
+            if not isinstance(incoming, dict) or not incoming:
+                # 防呆：空数据不写，避免误清库
+                self._json(400, {'error': '客户数据为空，已拒绝写入'})
+                return
+            try:
+                conn = get_conn()
+                now = datetime.now().isoformat(timespec='seconds')
+                for cid, cdata in incoming.items():
+                    conn.execute(
+                        'INSERT OR REPLACE INTO clients(id, owner_id, data, updated_at) VALUES(?,?,?,?)',
+                        (cid, 'local', json.dumps(cdata, ensure_ascii=False), now)
+                    )
+                # 删除本次未出现的客户（反映前端的删除操作）
+                ids = list(incoming.keys())
+                ph = ','.join('?' * len(ids))
+                conn.execute(f'DELETE FROM clients WHERE id NOT IN ({ph})', ids)
+                conn.commit()
+                conn.close()
+                self._json(200, {'ok': True, 'count': len(incoming)})
+            except Exception as e:
+                self._json(500, {'error': str(e)})
+            return
 
         # 图片生成接口独立处理
         if self.path == '/api/generate-image':
@@ -274,7 +351,9 @@ class GEOHandler(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     port = 8765
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    init_db()
     print(f'\n✅ GEO 工作台已启动 → http://localhost:{port}\n')
+    print(f'🗄️  数据库：{DB_PATH}')
     print('支持平台：' + ' | '.join(p['name'] for p in PROVIDERS.values()))
     print()
     HTTPServer(('', port), GEOHandler).serve_forever()
