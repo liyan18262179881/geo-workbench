@@ -124,16 +124,20 @@ textarea{resize:vertical;min-height:70px}
 .input-hint{font-size:11px;color:var(--sub);margin-top:2px}
 
 /* ── 按钮 ── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .12s}
-.btn-sm{padding:5px 12px;font-size:12px}
-.btn-primary{background:var(--purple);color:#fff}
-.btn-primary:hover{background:#6d28d9}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:transform .1s ease,box-shadow .12s ease,background .12s ease;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-sm{padding:6px 13px;font-size:12px}
+.btn-primary{background:var(--purple);color:#fff;box-shadow:0 1px 2px rgba(124,58,237,.25)}
+.btn-primary:hover{background:#6d28d9;box-shadow:0 3px 8px rgba(124,58,237,.3)}
 .btn-primary.copied{background:var(--green)}
 .btn-ghost{background:var(--gray-light);color:#374151}
-.btn-ghost:hover{background:var(--border)}
+.btn-ghost:hover{background:#e5e7eb}
 .btn-outline{background:#fff;color:var(--purple);border:1px solid var(--purple)}
 .btn-outline:hover{background:var(--purple-light)}
-.btn-green{background:var(--green);color:#fff}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 1px 2px rgba(22,163,74,.25)}
+.btn-green:hover{background:#15803d;box-shadow:0 3px 8px rgba(22,163,74,.3)}
+.btn-green.copied{background:var(--green)}
 
 /* ── 提示框 ── */
 .tip{border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.6}
@@ -222,7 +226,7 @@ textarea{resize:vertical;min-height:70px}
 /* ── Step4 双栏布局 ── */
 .kw-split{display:grid;grid-template-columns:210px 1fr 130px;border:1px solid var(--border);border-radius:12px;overflow:hidden;height:calc(100vh - 150px);min-height:560px}
 .kw-sidebar{border-right:1px solid var(--border);overflow-y:auto;background:#fafafa;padding:8px}
-.kw-main{display:flex;flex-direction:column;overflow:hidden;padding:18px 20px;background:#fff;border-right:1px solid var(--border)}
+.kw-main{display:flex;flex-direction:column;overflow:hidden;padding:18px 20px;background:#f8f9fb;border-right:1px solid var(--border)}
 .kw-versions{overflow-y:auto;background:#fafafa;padding:12px 10px}
 .kw-item{padding:9px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer;border:1px solid transparent;transition:.12s}
 .kw-item:hover{background:#f5f3ff}
@@ -1422,12 +1426,12 @@ function renderArticles(c){
     }).join('')
 
     mainPanel = `
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:3px">${selArt.title||selKw.word}</div>
-          <div style="font-size:11px;color:#9ca3af">${artLabel[selKw.art_type]||selKw.art_type} · 共 ${totalVer} 个版本</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px">
+        <div style="min-width:0">
+          <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;line-height:1.4">${selArt.title||selKw.word}</div>
+          <div style="font-size:12px;color:#6b7280">${artLabel[selKw.art_type]||selKw.art_type} · 共 ${totalVer} 个版本</div>
         </div>
-        <div style="display:flex;gap:5px;flex-shrink:0">
+        <div style="display:flex;gap:6px;flex-shrink:0">
           <button class="btn btn-green btn-sm" onclick="copyArticleBody('${c.id}','${selArt.id}',this)">📋 复制</button>
           <button class="btn btn-ghost btn-sm" onclick="humanizeArticle('${c.id}','${selArt.id}',this)">🧑 去AI味</button>
           <button class="btn btn-primary btn-sm" onclick="showGen('${c.id}','${selKw.word.replace(/'/g,"\\'")}','${selKw.art_type}')">🔄 重新生成</button>
@@ -1435,7 +1439,7 @@ function renderArticles(c){
       </div>
       <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">📣 已发布平台（点击切换）</div>
       <div class="pub-tracks">${platChips}</div>
-      <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap;flex:1;min-height:200px;overflow-y:auto">${stripMarkdown(selArt.body||'')}</div>
+      <div style="background:#fff;border:1px solid #eceef1;border-radius:10px;padding:22px 24px;font-size:14.5px;line-height:2;color:#1f2937;letter-spacing:.2px;white-space:pre-wrap;flex:1;min-height:200px;overflow-y:auto;box-shadow:0 1px 3px rgba(16,24,40,.04)">${stripMarkdown(selArt.body||'')}</div>
     `
 
     // ── 右栏：版本列 ──
@@ -1476,10 +1480,10 @@ function renderArticles(c){
       ${verPanel}
     </div>
   </div>
-  ${withArt>0?`<div style="display:flex;justify-content:flex-end;margin-top:10px">
-    <button class="btn btn-primary" onclick="completeStep(4)">✅ 进入发布后复查 →</button>
+  ${(withArt>0||c.step>=5)?`<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">
+    ${c.step>=5?`<button class="btn btn-outline" onclick="gotoStep(5)">查看发布后复查 →</button>`:''}
+    ${withArt>0?`<button class="btn btn-primary" onclick="completeStep(4)">✅ 进入发布后复查 →</button>`:''}
   </div>`:''}
-  ${c.step>=5?`<div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="btn btn-outline" onclick="gotoStep(5)">查看发布后复查 →</button></div>`:''}
   `
 }
 
