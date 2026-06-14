@@ -220,9 +220,9 @@ textarea{resize:vertical;min-height:70px}
   .client-cards{grid-template-columns:1fr}
 }
 /* ── Step4 双栏布局 ── */
-.kw-split{display:grid;grid-template-columns:210px 1fr 130px;border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:560px}
+.kw-split{display:grid;grid-template-columns:210px 1fr 130px;border:1px solid var(--border);border-radius:12px;overflow:hidden;height:calc(100vh - 150px);min-height:560px}
 .kw-sidebar{border-right:1px solid var(--border);overflow-y:auto;background:#fafafa;padding:8px}
-.kw-main{overflow-y:auto;padding:18px 20px;background:#fff;border-right:1px solid var(--border)}
+.kw-main{display:flex;flex-direction:column;overflow:hidden;padding:18px 20px;background:#fff;border-right:1px solid var(--border)}
 .kw-versions{overflow-y:auto;background:#fafafa;padding:12px 10px}
 .kw-item{padding:9px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer;border:1px solid transparent;transition:.12s}
 .kw-item:hover{background:#f5f3ff}
@@ -1435,7 +1435,7 @@ function renderArticles(c){
       </div>
       <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">📣 已发布平台（点击切换）</div>
       <div class="pub-tracks">${platChips}</div>
-      <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap;max-height:75vh;overflow-y:auto">${stripMarkdown(selArt.body||'')}</div>
+      <div style="background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.85;color:#374151;white-space:pre-wrap;flex:1;min-height:200px;overflow-y:auto">${stripMarkdown(selArt.body||'')}</div>
     `
 
     // ── 右栏：版本列 ──
