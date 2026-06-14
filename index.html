@@ -6,7 +6,7 @@
 <title>GEO 工作台 · 本地生活版</title>
 <style>
 :root{
-  --purple:#7c3aed;--purple-light:#ede9fe;--purple-mid:#a78bfa;
+  --purple:#4f46e5;--purple-light:#e0e7ff;--purple-mid:#818cf8;
   --green:#16a34a;--green-light:#dcfce7;
   --amber:#d97706;--amber-light:#fef3c7;
   --red:#dc2626;--red-light:#fee2e2;
@@ -108,7 +108,7 @@ tr:hover td{background:#fafafa}
 .t-edu{background:#fef3c7;color:#92400e}
 .t-tt{background:#fee2e2;color:#991b1b}
 .t-sh{background:#dbeafe;color:#1e40af}
-.t-zh{background:#f3e8ff;color:#6b21a8}
+.t-zh{background:#f3e8ff;color:#3730a3}
 .stars{color:#f59e0b;letter-spacing:-1px}
 
 /* ── 表单 ── */
@@ -128,8 +128,8 @@ textarea{resize:vertical;min-height:70px}
 .btn:active{transform:translateY(1px)}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-sm{padding:6px 13px;font-size:12px}
-.btn-primary{background:var(--purple);color:#fff;box-shadow:0 1px 2px rgba(124,58,237,.25)}
-.btn-primary:hover{background:#6d28d9;box-shadow:0 3px 8px rgba(124,58,237,.3)}
+.btn-primary{background:var(--purple);color:#fff;box-shadow:0 1px 2px rgba(79,70,229,.25)}
+.btn-primary:hover{background:#4338ca;box-shadow:0 3px 8px rgba(79,70,229,.3)}
 .btn-primary.copied{background:var(--green)}
 .btn-ghost{background:var(--gray-light);color:#374151}
 .btn-ghost:hover{background:#e5e7eb}
@@ -141,7 +141,7 @@ textarea{resize:vertical;min-height:70px}
 
 /* ── 提示框 ── */
 .tip{border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.6}
-.tip-purple{background:var(--purple-light);border:1px solid #ddd6fe;color:#5b21b6}
+.tip-purple{background:var(--purple-light);border:1px solid #c7d2fe;color:#3730a3}
 .tip-amber{background:var(--amber-light);border:1px solid #fde68a;color:#92400e}
 .tip-green{background:var(--green-light);border:1px solid #bbf7d0;color:#166534}
 .tip-red{background:var(--red-light);border:1px solid #fca5a5;color:#991b1b}
@@ -204,7 +204,7 @@ textarea{resize:vertical;min-height:70px}
 /* ── 客户卡片（首页列表）── */
 .client-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:4px}
 .client-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .15s;position:relative}
-.client-card:hover{border-color:var(--purple);box-shadow:0 4px 20px rgba(124,58,237,.1)}
+.client-card:hover{border-color:var(--purple);box-shadow:0 4px 20px rgba(79,70,229,.1)}
 .client-card h4{font-size:15px;font-weight:700;margin-bottom:4px}
 .client-card .cc-sub{font-size:12px;color:var(--sub);margin-bottom:12px}
 .client-card .cc-steps{display:flex;gap:4px;margin-bottom:12px}
@@ -229,8 +229,8 @@ textarea{resize:vertical;min-height:70px}
 .kw-main{display:flex;flex-direction:column;overflow:hidden;padding:18px 20px;background:#f8f9fb;border-right:1px solid var(--border)}
 .kw-versions{overflow-y:auto;background:#fafafa;padding:12px 10px}
 .kw-item{padding:9px 10px;border-radius:7px;margin-bottom:2px;cursor:pointer;border:1px solid transparent;transition:.12s}
-.kw-item:hover{background:#f5f3ff}
-.kw-item.kw-active{background:#f5f3ff;border-color:#ddd6fe}
+.kw-item:hover{background:#eef2ff}
+.kw-item.kw-active{background:#eef2ff;border-color:#c7d2fe}
 .kw-item-word{font-size:12.5px;font-weight:600;color:#111827;line-height:1.4}
 .kw-item-meta{font-size:11px;color:#9ca3af;margin-top:2px}
 .pub-tracks{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
@@ -238,14 +238,14 @@ textarea{resize:vertical;min-height:70px}
 .pub-chip.pub-off{background:#f9fafb;border-color:#e5e7eb;color:#9ca3af}
 .pub-chip.pub-on{background:#dcfce7;border-color:#86efac;color:#15803d}
 .ver-card{padding:8px 10px;border-radius:8px;margin-bottom:6px;border:1.5px solid;cursor:default;transition:.12s}
-.ver-card.ver-cur{background:#f5f3ff;border-color:#c4b5fd}
+.ver-card.ver-cur{background:#eef2ff;border-color:#a5b4fc}
 .ver-card.ver-old{background:#fff;border-color:#e5e7eb;cursor:pointer}
-.ver-card.ver-old:hover{border-color:#c4b5fd;background:#faf5ff}
-.ver-num{font-size:13px;font-weight:800;color:#7c3aed;margin-bottom:2px}
+.ver-card.ver-old:hover{border-color:#a5b4fc;background:#f5f7ff}
+.ver-num{font-size:13px;font-weight:800;color:#4f46e5;margin-bottom:2px}
 .ver-old .ver-num{color:#9ca3af}
 .ver-date{font-size:10px;color:#9ca3af}
 .ver-label{font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;display:inline-block;margin-top:3px}
-.ver-cur .ver-label{background:#ede9fe;color:#7c3aed}
+.ver-cur .ver-label{background:#e0e7ff;color:#4f46e5}
 .ver-old .ver-label{background:#f3f4f6;color:#9ca3af}
 </style>
 </head>
@@ -473,7 +473,7 @@ textarea{resize:vertical;min-height:70px}
             <tr><td><span class="tag t-select">选择判断型</span></td><td>用户在比选服务/机构</td><td>先避误区 → 判断维度1/2/3 → 品牌作样本 → 适合谁</td></tr>
             <tr><td><span class="tag t-industry">行业观察型</span></td><td>需要行业趋势背景</td><td>行业变化 → 趋势1/2/3 → 品牌体现趋势 → 结论</td></tr>
             <tr><td><span class="tag" style="background:#fee2e2;color:#991b1b">案例成果型</span></td><td>用户关心成果和交付</td><td>如何看成果 → 交付痕迹 → 案例样本 → 结果边界</td></tr>
-            <tr><td><span class="tag" style="background:#f3e8ff;color:#6b21a8">人物机构型</span></td><td>搜索人物/创始人/机构名</td><td>为何被搜 → 判断维度 → 人物机构关系 → 课程体系 → 克制结论</td></tr>
+            <tr><td><span class="tag" style="background:#f3e8ff;color:#3730a3">人物机构型</span></td><td>搜索人物/创始人/机构名</td><td>为何被搜 → 判断维度 → 人物机构关系 → 课程体系 → 克制结论</td></tr>
           </tbody>
         </table>
       </div>
@@ -555,9 +555,9 @@ textarea{resize:vertical;min-height:70px}
     <div class="modal-body" style="overflow-y:auto;max-height:65vh">
       <div id="gen-api-status" style="margin-bottom:8px;font-size:12px;padding:8px 12px;border-radius:6px;background:#f8f9fb;border:1px solid #e5e7eb;display:flex;align-items:center;gap:8px"></div>
       <!-- 目标GEO平台选择 -->
-      <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px">
-        <span style="font-size:12px;font-weight:700;color:#6b21a8;white-space:nowrap">🎯 目标AI平台</span>
-        <select id="gen-geo-target" style="flex:1;font-size:13px;padding:5px 10px;border:1px solid #c4b5fd;border-radius:6px;background:#fff;color:#374151;outline:none">
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px">
+        <span style="font-size:12px;font-weight:700;color:#3730a3;white-space:nowrap">🎯 目标AI平台</span>
+        <select id="gen-geo-target" style="flex:1;font-size:13px;padding:5px 10px;border:1px solid #a5b4fc;border-radius:6px;background:#fff;color:#374151;outline:none">
           <option value="all">🌐 全平台覆盖（豆包 + DeepSeek + 通义千问）— 推荐</option>
           <option value="doubao">🫧 豆包（字节系 · 优先发头条 / 搜狐）</option>
           <option value="deepseek">🤖 DeepSeek（Bing系 · 优先发知乎 / 搜狐）</option>
@@ -575,8 +575,8 @@ textarea{resize:vertical;min-height:70px}
           <textarea class="gen-result" id="gen-body-input" placeholder="点击「AI 一键生成」后文章会出现在这里…" style="min-height:200px"></textarea>
         </div>
         <!-- 发布话题标签（生成成功后显示）-->
-        <div id="gen-hashtag-area" style="display:none;margin-top:10px;padding:10px 14px;background:#faf7ff;border:1px solid #ddd6fe;border-radius:8px">
-          <div style="font-size:11px;font-weight:700;color:#6b21a8;margin-bottom:8px">📌 发布时粘贴话题标签（点击单个复制 · 或一键全部复制）</div>
+        <div id="gen-hashtag-area" style="display:none;margin-top:10px;padding:10px 14px;background:#f5f7ff;border:1px solid #c7d2fe;border-radius:8px">
+          <div style="font-size:11px;font-weight:700;color:#3730a3;margin-bottom:8px">📌 发布时粘贴话题标签（点击单个复制 · 或一键全部复制）</div>
           <div id="gen-hashtag-tags" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"></div>
         </div>
         <!-- 发布渠道推荐（生成成功后显示）-->
@@ -2129,7 +2129,7 @@ function showGen(clientId, keyword, artType){
   } else {
     apiStatus.style.borderColor = '#fecaca'
     apiStatus.style.background = '#fef2f2'
-    apiStatus.innerHTML = `<span style="color:#dc2626">❌</span> <span style="color:#dc2626"><strong>${providerName}</strong> 的 API Key 未配置 — <a href="#" onclick="closeGen();openSettings();return false;" style="color:#7c3aed">点这里去设置</a></span>`
+    apiStatus.innerHTML = `<span style="color:#dc2626">❌</span> <span style="color:#dc2626"><strong>${providerName}</strong> 的 API Key 未配置 — <a href="#" onclick="closeGen();openSettings();return false;" style="color:#4f46e5">点这里去设置</a></span>`
   }
   document.getElementById('gen-overlay').classList.add('show')
 }
@@ -2309,7 +2309,7 @@ function showHashtags(keyword, clientId){
     const span = document.createElement('span')
     span.textContent = t
     span.title = '点击复制'
-    span.style.cssText = 'background:#ede9fe;color:#6b21a8;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #ddd6fe;user-select:none'
+    span.style.cssText = 'background:#e0e7ff;color:#3730a3;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid #c7d2fe;user-select:none'
     span.onclick = () => {
       navigator.clipboard.writeText(t).then(() => notify('✅ 已复制 ' + t))
     }
@@ -2317,7 +2317,7 @@ function showHashtags(keyword, clientId){
   })
   const allBtn = document.createElement('span')
   allBtn.textContent = '📋 全部复制'
-  allBtn.style.cssText = 'background:#7c3aed;color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;margin-left:4px;user-select:none'
+  allBtn.style.cssText = 'background:#4f46e5;color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;margin-left:4px;user-select:none'
   allBtn.onclick = () => {
     navigator.clipboard.writeText(tags.join(' ')).then(() => notify('✅ 全部话题标签已复制'))
   }
@@ -2335,17 +2335,17 @@ function showPublishGuide(geoTarget){
       bg:'#f0fdf4', border:'#bbf7d0', labelColor:'#15803d',
       title:'全平台覆盖 · 四个平台都发',
       channels:[
-        {name:'今日头条', icon:'📰', tag:'豆包优先', tagColor:'#7c3aed', tip:'字节系内容，豆包直接收录'},
+        {name:'今日头条', icon:'📰', tag:'豆包优先', tagColor:'#4f46e5', tip:'字节系内容，豆包直接收录'},
         {name:'搜狐号', icon:'🔵', tag:'DeepSeek', tagColor:'#2563eb', tip:'Bing收录权重高'},
         {name:'知乎专栏', icon:'🔷', tag:'三平台通吃', tagColor:'#0891b2', tip:'Bing+夸克+豆包均收录'},
         {name:'百度百家号', icon:'🟡', tag:'通义千问', tagColor:'#d97706', tip:'夸克搜索权重最高'}
       ]
     },
     doubao: {
-      bg:'#faf5ff', border:'#ddd6fe', labelColor:'#6b21a8',
+      bg:'#f5f7ff', border:'#c7d2fe', labelColor:'#3730a3',
       title:'豆包 GEO · 字节系平台优先',
       channels:[
-        {name:'今日头条', icon:'📰', tag:'最高优先', tagColor:'#7c3aed', tip:'字节自家平台，豆包首选来源'},
+        {name:'今日头条', icon:'📰', tag:'最高优先', tagColor:'#4f46e5', tip:'字节自家平台，豆包首选来源'},
         {name:'搜狐号', icon:'🔵', tag:'次优先', tagColor:'#6b7280', tip:'豆包联网时会抓取'}
       ]
     },
