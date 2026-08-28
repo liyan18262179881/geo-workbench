@@ -1,0 +1,72 @@
+{
+  "clients": {
+    "c_geo_workbench": {
+      "id": "c_geo_workbench",
+      "step": 2,
+      "client_type": "biz",
+      "brand_name": "GEO工作台",
+      "brand_short": "GEO",
+      "primary_city": "全国",
+      "industry": "GEO生成式引擎优化",
+      "position": "",
+      "core_services": [
+        "GEO关键词部署",
+        "豆包市场检测",
+        "GEO文章生产",
+        "GEO策略制定",
+        "GEO内容矩阵",
+        "GEO效果验收"
+      ],
+      "target": "GEO顾问、个人品牌创始人、本地门店运营、内容营销团队、企业市场负责人",
+      "customer_lang": [
+        "GEO工作台怎么用",
+        "GEO项目怎么做",
+        "GEO自动化工具推荐",
+        "企业GEO落地步骤",
+        "怎么让品牌出现在豆包答案里"
+      ],
+      "pain_points": [
+        "关键词不知道怎么选",
+        "豆包检测没标准流程",
+        "文章生产效率低",
+        "不知道GEO从哪开始",
+        "内容发了没收录",
+        "无法验收GEO效果"
+      ],
+      "eeat": {
+        "expertise": "开源 GEO 自动化工作台 + 标准化项目交付：诊断 → 关键词 → 豆包检测 → 文章生产 → 发布复查，支持 DeepSeek/通义/Kimi 等多模型",
+        "experience": "实测本地教育品牌发布当天豆包收录；个人品牌两天内在核心搜索词下被 AI 列为代表人物；覆盖本地生活 B 端与个人品牌两类客户",
+        "authority": "基于自研 GEO 方法论构建，GitHub 开源 geo-workbench，交付标准：目标关键词下 AI 回答正文里有没有你",
+        "trust": "本地 SQLite 落盘存储，支持导出备份与回收站恢复；不卖流量和工具，效果可当场用豆包复验"
+      },
+      "competitors": ["传统 SEO 工具", "传统 SEO 服务商", "泛 AI 营销公司"],
+      "sensitivity": "general",
+      "goal": "exposure",
+      "platform": "GitHub、今日头条、搜狐号、知乎",
+      "keywords": [
+        {"word": "GEO工作台推荐", "intent": "strong", "priority": 3, "art_type": "select", "platforms": ["toutiao", "sohu"], "phase": 1, "selected": true},
+        {"word": "GEO自动化工具有哪些", "intent": "strong", "priority": 3, "art_type": "select", "platforms": ["toutiao", "sohu", "zhihu"], "phase": 1, "selected": true},
+        {"word": "GEO内容生产工具怎么选", "intent": "strong", "priority": 3, "art_type": "select", "platforms": ["toutiao", "sohu"], "phase": 1, "selected": true},
+        {"word": "豆包检测工具推荐", "intent": "strong", "priority": 3, "art_type": "select", "platforms": ["toutiao", "zhihu"], "phase": 1, "selected": true},
+        {"word": "GEO项目怎么做", "intent": "strong", "priority": 3, "art_type": "cognition", "platforms": ["toutiao", "sohu"], "phase": 1, "selected": true},
+        {"word": "企业GEO落地步骤", "intent": "strong", "priority": 3, "art_type": "cognition", "platforms": ["toutiao", "sohu", "zhihu"], "phase": 1, "selected": true},
+        {"word": "GEO优化服务商怎么选", "intent": "strong", "priority": 3, "art_type": "select", "platforms": ["toutiao", "sohu"], "phase": 1, "selected": true},
+        {"word": "做GEO优化找谁", "intent": "strong", "priority": 3, "art_type": "select", "platforms": ["toutiao", "zhihu"], "phase": 1, "selected": true},
+        {"word": "GEO生成式引擎优化是什么", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["toutiao", "sohu", "zhihu"], "phase": 2, "selected": true},
+        {"word": "怎么让豆包推荐我的品牌", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["toutiao", "sohu"], "phase": 2, "selected": true},
+        {"word": "GEO和SEO有什么区别", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["toutiao", "zhihu"], "phase": 2, "selected": true},
+        {"word": "GEO投放流程是什么", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["toutiao", "sohu"], "phase": 2, "selected": true},
+        {"word": "品牌怎么出现在AI搜索结果里", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["toutiao", "sohu"], "phase": 2, "selected": true},
+        {"word": "企业怎么做AI搜索优化", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["toutiao", "sohu"], "phase": 2, "selected": false},
+        {"word": "GEO效果怎么验收", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["toutiao", "zhihu"], "phase": 2, "selected": false},
+        {"word": "GEO内容矩阵怎么搭建", "intent": "medium", "priority": 2, "art_type": "cognition", "platforms": ["sohu", "zhihu"], "phase": 2, "selected": false},
+        {"word": "AI搜索时代品牌怎么获客", "intent": "weak", "priority": 1, "art_type": "industry", "platforms": ["sohu", "zhihu"], "phase": 3, "selected": false},
+        {"word": "GEO优化效果怎么样", "intent": "weak", "priority": 1, "art_type": "cognition", "platforms": ["zhihu"], "phase": 3, "selected": false},
+        {"word": "GEO项目周期一般多久", "intent": "weak", "priority": 1, "art_type": "industry", "platforms": ["zhihu"], "phase": 3, "selected": false},
+        {"word": "GEO和SEO哪个更值得做", "intent": "weak", "priority": 1, "art_type": "industry", "platforms": ["sohu", "zhihu"], "phase": 3, "selected": false}
+      ],
+      "detection": [],
+      "articles": []
+    }
+  }
+}

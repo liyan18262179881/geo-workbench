@@ -17,7 +17,7 @@ from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'geo.db')
 SEED_PRESET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 'seeds', 'restore-GEO工作台-GEO项目.json')
+                                 'seeds', 'restore-GEO工作台.json')
 
 
 def get_conn():
@@ -143,7 +143,7 @@ def main():
     parser.add_argument('--from-backup', metavar='FILE', help='从指定备份 JSON 恢复')
     parser.add_argument('--restore-trash', nargs='*', metavar='ID', help='从回收站恢复指定 id（省略则全部）')
     parser.add_argument('--restore-preset', action='store_true',
-                        help='恢复预设客户：GEO工作台 + GEO项目')
+                        help='恢复预设客户 GEO工作台（已合并 GEO项目）')
     args = parser.parse_args()
 
     if args.restore_preset:
@@ -244,7 +244,7 @@ def main():
     if backups:
         print('👉 从最新备份恢复：python3 recover.py --from-backup ' + os.path.basename(backups[0]['path']))
     if os.path.isfile(SEED_PRESET_PATH):
-        print('👉 恢复 GEO工作台 + GEO项目：python3 recover.py --restore-preset')
+        print('👉 恢复 GEO工作台（合并版）：python3 recover.py --restore-preset')
     if not trash and not backups:
         print('\n⚠️  未发现回收站数据或备份文件。')
         print('若刚删除，请确认是否曾点过顶栏「导出备份」。')

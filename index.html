@@ -2150,7 +2150,7 @@ function renderTrash(){
       <div style="font-size:32px;margin-bottom:8px">🗑️</div>
       <div style="font-size:14px;font-weight:600;margin-bottom:6px">回收站为空</div>
       <div style="font-size:12px">若刚误删，可尝试顶栏「导入备份」，或在本机项目目录运行：<br><code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;margin-top:8px;display:inline-block">python3 recover.py --restore-preset</code></div>
-      <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="restorePresetClients()">↩️ 恢复 GEO工作台 + GEO项目</button>
+      <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="restorePresetClients()">↩️ 恢复 GEO工作台</button>
     </div></div>`
     return
   }
@@ -2200,41 +2200,41 @@ async function restoreClient(id){
 }
 
 async function restorePresetClientsIfMissing(){
-  const presetIds = ['c_geo_workbench', 'c_geo_project']
-  const missing = presetIds.filter(id => !DB.clients[id])
-  if(!missing.length) return false
+  // 合并版：单一客户 c_geo_workbench；若存在旧版 c_geo_project 则移除
+  if(DB.clients['c_geo_project']){
+    delete DB.clients['c_geo_project']
+    DB.save()
+  }
+  if(DB.clients['c_geo_workbench']) return false
   try{
-    const r = await fetch('seeds/restore-GEO工作台-GEO项目.json')
+    const r = await fetch('seeds/restore-GEO工作台.json')
     if(!r.ok) return false
     const data = await r.json()
-    let n = 0
-    missing.forEach(id=>{
-      if(data.clients?.[id]){
-        DB.clients[id] = data.clients[id]
-        n++
-      }
-    })
-    if(n) DB.save()
-    return n > 0
+    const c = data.clients?.['c_geo_workbench']
+    if(!c) return false
+    DB.clients['c_geo_workbench'] = c
+    DB.save()
+    return true
   }catch(e){ return false }
 }
 
 async function restorePresetClients(){
   try{
-    const r = await fetch('seeds/restore-GEO工作台-GEO项目.json')
+    const r = await fetch('seeds/restore-GEO工作台.json')
     if(!r.ok){ alert('预设文件未找到'); return }
     const data = await r.json()
-    const clients = data.clients || {}
-    const names = Object.values(clients).map(c=>c.brand_name).join('、')
-    if(!confirm(`恢复预设客户：${names}\n\n若已存在同名客户将被覆盖，是否继续？`)) return
-    Object.assign(DB.clients, clients)
+    const c = data.clients?.['c_geo_workbench']
+    if(!c){ alert('预设数据无效'); return }
+    if(DB.clients['c_geo_project']) delete DB.clients['c_geo_project']
+    if(!confirm(`恢复合并客户「${c.brand_name}」（含原 GEO项目 关键词与诊断）\n\n若已存在将被覆盖，是否继续？`)) return
+    DB.clients['c_geo_workbench'] = c
     DB.save()
     await DB.load()
     renderSidebar()
     renderHome()
     renderTrash()
     showHome()
-    alert(`✅ 已恢复：${names}`)
+    alert(`✅ 已恢复：${c.brand_name}`)
   }catch(e){
     alert('恢复失败，请确认 server.py 已启动')
   }
