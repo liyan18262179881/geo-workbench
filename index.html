@@ -2149,7 +2149,8 @@ function renderTrash(){
     list.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--sub)">
       <div style="font-size:32px;margin-bottom:8px">🗑️</div>
       <div style="font-size:14px;font-weight:600;margin-bottom:6px">回收站为空</div>
-      <div style="font-size:12px">若刚误删，可尝试顶栏「导入备份」，或在本机项目目录运行：<br><code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;margin-top:8px;display:inline-block">python3 recover.py</code></div>
+      <div style="font-size:12px">若刚误删，可尝试顶栏「导入备份」，或在本机项目目录运行：<br><code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;margin-top:8px;display:inline-block">python3 recover.py --restore-preset</code></div>
+      <button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="restorePresetClients()">↩️ 恢复 GEO工作台 + GEO项目</button>
     </div></div>`
     return
   }
@@ -2198,7 +2199,46 @@ async function restoreClient(id){
   }
 }
 
-async function importBackupFile(ev){
+async function restorePresetClientsIfMissing(){
+  const presetIds = ['c_geo_workbench', 'c_geo_project']
+  const missing = presetIds.filter(id => !DB.clients[id])
+  if(!missing.length) return false
+  try{
+    const r = await fetch('seeds/restore-GEO工作台-GEO项目.json')
+    if(!r.ok) return false
+    const data = await r.json()
+    let n = 0
+    missing.forEach(id=>{
+      if(data.clients?.[id]){
+        DB.clients[id] = data.clients[id]
+        n++
+      }
+    })
+    if(n) DB.save()
+    return n > 0
+  }catch(e){ return false }
+}
+
+async function restorePresetClients(){
+  try{
+    const r = await fetch('seeds/restore-GEO工作台-GEO项目.json')
+    if(!r.ok){ alert('预设文件未找到'); return }
+    const data = await r.json()
+    const clients = data.clients || {}
+    const names = Object.values(clients).map(c=>c.brand_name).join('、')
+    if(!confirm(`恢复预设客户：${names}\n\n若已存在同名客户将被覆盖，是否继续？`)) return
+    Object.assign(DB.clients, clients)
+    DB.save()
+    await DB.load()
+    renderSidebar()
+    renderHome()
+    renderTrash()
+    showHome()
+    alert(`✅ 已恢复：${names}`)
+  }catch(e){
+    alert('恢复失败，请确认 server.py 已启动')
+  }
+}
   const file = ev.target.files?.[0]
   ev.target.value = ''
   if(!file) return
@@ -2631,6 +2671,11 @@ function showPrompt(clientId, keyword, artType){
 ;(async function init(){
 await DB.load()
 await DB.loadTrash()
+const presetRestored = await restorePresetClientsIfMissing()
+if(presetRestored){
+  renderSidebar()
+  renderHome()
+}
 
 // ── 拾光伴学关键词扩充（含暑假补课场景词）──
 if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shiguang'].keywords.length < 36){

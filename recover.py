@@ -16,6 +16,8 @@ import sys
 from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'geo.db')
+SEED_PRESET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 'seeds', 'restore-GEO工作台-GEO项目.json')
 
 
 def get_conn():
@@ -140,7 +142,27 @@ def main():
     parser.add_argument('--restore-all', action='store_true', help='从回收站恢复全部 + 合并最新备份')
     parser.add_argument('--from-backup', metavar='FILE', help='从指定备份 JSON 恢复')
     parser.add_argument('--restore-trash', nargs='*', metavar='ID', help='从回收站恢复指定 id（省略则全部）')
+    parser.add_argument('--restore-preset', action='store_true',
+                        help='恢复预设客户：GEO工作台 + GEO项目')
     args = parser.parse_args()
+
+    if args.restore_preset:
+        if not os.path.isfile(SEED_PRESET_PATH):
+            print(f'❌ 未找到预设文件：{SEED_PRESET_PATH}')
+            sys.exit(1)
+        with open(SEED_PRESET_PATH, 'r', encoding='utf-8') as f:
+            clients = json.load(f).get('clients') or {}
+        if os.path.isfile(DB_PATH):
+            conn = get_conn()
+            restore_clients(conn, clients)
+            conn.close()
+            print(f'✅ 已恢复预设客户：{", ".join(c.get("brand_name", k) for k, c in clients.items())}')
+            print('请刷新浏览器页面。')
+        else:
+            print(f'预设含 {len(clients)} 个客户：{", ".join(c.get("brand_name", k) for k, c in clients.items())}')
+            print('未找到 geo.db，请启动 server.py 后，在界面「导入备份」选择：')
+            print(f'  {SEED_PRESET_PATH}')
+        return
 
     if not os.path.isfile(DB_PATH):
         print(f'❌ 未找到数据库：{DB_PATH}')
@@ -221,6 +243,8 @@ def main():
         print('\n👉 恢复回收站全部：python3 recover.py --restore-trash')
     if backups:
         print('👉 从最新备份恢复：python3 recover.py --from-backup ' + os.path.basename(backups[0]['path']))
+    if os.path.isfile(SEED_PRESET_PATH):
+        print('👉 恢复 GEO工作台 + GEO项目：python3 recover.py --restore-preset')
     if not trash and not backups:
         print('\n⚠️  未发现回收站数据或备份文件。')
         print('若刚删除，请确认是否曾点过顶栏「导出备份」。')
