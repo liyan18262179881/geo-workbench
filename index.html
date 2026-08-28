@@ -262,7 +262,11 @@ textarea{resize:vertical;min-height:70px}
   <div class="topbar-spacer"></div>
   <div class="method-tag">📖 基于 GEO 自动化方法论</div>
   <div id="db-status" title="数据存储状态" style="font-size:12px;color:#9ca3af">🗄️ …</div>
+  <label title="从备份 JSON 恢复客户" style="font-size:12px;color:#4b5563;cursor:pointer">
+    ⬆️ 导入备份<input type="file" id="import-backup-input" accept=".json,application/json" style="display:none" onchange="importBackupFile(event)"/>
+  </label>
   <a href="http://localhost:8765/api/export" title="下载数据备份（JSON）" style="font-size:12px;color:#4b5563;text-decoration:none;cursor:pointer">⬇️ 导出备份</a>
+  <div id="trash-nav-top" onclick="showTrash()" title="回收站" style="font-size:12px;color:#4b5563;cursor:pointer;position:relative">🗑️ 回收站<span id="trash-badge" style="display:none;position:absolute;top:-6px;right:-10px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px"></span></div>
   <div id="server-status" style="font-size:12px;color:#4b5563;cursor:pointer" onclick="showSettings()">⚙️ 设置</div>
 </div>
 
@@ -296,6 +300,16 @@ textarea{resize:vertical;min-height:70px}
       💡 <strong>四步标准流程：</strong>诊断 → 关键词 → 豆包检测 → 文章生产。每步完成后进入下一步，不跳步骤。
     </div>
     <div class="client-cards" id="client-cards-list"></div>
+  </div>
+
+  <!-- ══ 回收站 ══ -->
+  <div class="page" id="page-trash">
+    <div class="page-title">回收站</div>
+    <div class="page-sub">误删的客户会保留在这里，可随时恢复</div>
+    <div class="tip tip-purple" style="margin-bottom:16px">
+      💡 删除客户后数据会先进入回收站。若回收站为空，可尝试顶栏「导入备份」或在本机运行 <code style="font-size:11px">python3 recover.py</code> 扫描备份文件。
+    </div>
+    <div id="trash-list"></div>
   </div>
 
   <!-- ══ 新客户表单 ══ -->
@@ -671,6 +685,7 @@ textarea{resize:vertical;min-height:70px}
 // ══════════════════════════════════════════════
 const DB = {
   clients: {},
+  trash: {},
   _saveTimer: null,
   _syncOk: null,        // null=未知 true=已同步到数据库 false=同步失败
   _srv(){ return (typeof SETTINGS!=='undefined' && SETTINGS.serverUrl) || 'http://localhost:8765' },
@@ -682,7 +697,7 @@ const DB = {
     this._saveTimer = setTimeout(()=> this._pushToServer(), 400)
   },
   async _pushToServer(){
-    if(!this.clients || !Object.keys(this.clients).length) return
+    if(!this.clients || typeof this.clients !== 'object') return
     try{
       const r = await fetch(this._srv()+'/api/db', {
         method:'POST', mode:'cors',
@@ -690,8 +705,17 @@ const DB = {
         body: JSON.stringify({clients: this.clients})
       })
       this._syncOk = r.ok
+      if(r.ok) await this.loadTrash()
     }catch(e){ this._syncOk = false }
     if(typeof updateDbStatus==='function') updateDbStatus()
+  },
+  async loadTrash(){
+    try{
+      const r = await fetch(this._srv()+'/api/trash', {mode:'cors'})
+      const data = await r.json()
+      this.trash = (data && data.trash) || {}
+    }catch(e){ this.trash = {} }
+    if(typeof updateTrashBadge==='function') updateTrashBadge()
   },
   async load(){
     // 优先从数据库读
@@ -856,12 +880,15 @@ function renderSidebar(){
     </div>`).join('')
 }
 
-function deleteClient(id){
+async function deleteClient(id){
   const c = DB.clients[id]
   if(!c) return
-  if(!confirm(`确定删除「${c.brand_name}」？\n\n删除后无法恢复，所有关键词和文章都会清空。`)) return
+  if(!confirm(`确定删除「${c.brand_name}」？\n\n客户会移入回收站，可在回收站恢复。`)) return
   delete DB.clients[id]
-  DB.save()
+  try{ localStorage.setItem('geo_v2_clients', JSON.stringify(DB.clients)) }catch(e){}
+  clearTimeout(DB._saveTimer)
+  await DB._pushToServer()
+  await DB.loadTrash()
   renderSidebar()
   showHome()
 }
@@ -2097,6 +2124,111 @@ function updateDbStatus(){
   const el = document.getElementById('db-status')
   if(!el) return
   if(DB._syncOk === true){ el.textContent = '🗄️ 已存入数据库'; el.style.color = '#22c55e' }
+  else if(DB._syncOk === false){ el.textContent = '🗄️ 仅本地缓存'; el.style.color = '#f59e0b' }
+  else { el.textContent = '🗄️ …'; el.style.color = '#9ca3af' }
+}
+
+function updateTrashBadge(){
+  const badge = document.getElementById('trash-badge')
+  if(!badge) return
+  const n = Object.keys(DB.trash || {}).length
+  if(n > 0){ badge.style.display = ''; badge.textContent = n }
+  else { badge.style.display = 'none' }
+}
+
+function showTrash(){
+  showPage('trash')
+  document.querySelectorAll('.sb-item').forEach(n=>n.classList.remove('active'))
+  renderTrash()
+}
+
+function renderTrash(){
+  const list = document.getElementById('trash-list')
+  const items = Object.values(DB.trash || {})
+  if(!items.length){
+    list.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--sub)">
+      <div style="font-size:32px;margin-bottom:8px">🗑️</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px">回收站为空</div>
+      <div style="font-size:12px">若刚误删，可尝试顶栏「导入备份」，或在本机项目目录运行：<br><code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;margin-top:8px;display:inline-block">python3 recover.py</code></div>
+    </div></div>`
+    return
+  }
+  list.innerHTML = items.map(c=>`
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:15px;font-weight:700">${c.brand_name||c.id}</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:4px">
+            ${c.primary_city||c.industry||''} · ${c.keywords?.length||0} 个关键词 · ${c.articles?.length||0} 篇文章
+            ${c._deleted_at ? ' · 删除于 '+c._deleted_at.replace('T',' '): ''}
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="restoreClient('${c.id}')">↩️ 恢复</button>
+      </div>
+    </div>`).join('')
+}
+
+async function restoreClient(id){
+  try{
+    const r = await fetch(DB._srv()+'/api/restore', {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id})
+    })
+    const data = await r.json()
+    if(!r.ok || !data.restored?.length){
+      alert('恢复失败：'+(data.error||'客户不在回收站'))
+      return
+    }
+    const item = DB.trash[id]
+    if(item){
+      delete item._deleted_at
+      DB.clients[id] = item
+      DB.save()
+    }
+    await DB.load()
+    await DB.loadTrash()
+    renderSidebar()
+    renderHome()
+    renderTrash()
+    showHome()
+    alert(`已恢复「${item?.brand_name||id}」`)
+  }catch(e){
+    alert('恢复失败，请确认 server.py 已启动')
+  }
+}
+
+async function importBackupFile(ev){
+  const file = ev.target.files?.[0]
+  ev.target.value = ''
+  if(!file) return
+  try{
+    const text = await file.text()
+    const data = JSON.parse(text)
+    const clients = data.clients
+    if(!clients || !Object.keys(clients).length){
+      alert('备份文件里没有客户数据')
+      return
+    }
+    const names = Object.values(clients).map(c=>c.brand_name||'?').join('、')
+    if(!confirm(`将导入 ${Object.keys(clients).length} 个客户：\n${names}\n\n同名客户会被覆盖，是否继续？`)) return
+    const r = await fetch(DB._srv()+'/api/import', {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({clients})
+    })
+    const res = await r.json()
+    if(!r.ok){ alert('导入失败：'+(res.error||'')); return }
+    Object.assign(DB.clients, clients)
+    DB.save()
+    await DB.load()
+    renderSidebar()
+    renderHome()
+    alert(`✅ 已导入 ${res.count} 个客户，请查看客户总览。`)
+  }catch(e){
+    alert('文件格式错误，请选择 geo-backup-*.json 备份文件')
+  }
+}
   else if(DB._syncOk === false){ el.textContent = '⚠️ 仅本地（数据库未连接）'; el.style.color = '#f59e0b' }
   else { el.textContent = '🗄️ …'; el.style.color = '#9ca3af' }
 }
@@ -2498,6 +2630,7 @@ function showPrompt(clientId, keyword, artType){
 // ══════════════════════════════════════════════
 ;(async function init(){
 await DB.load()
+await DB.loadTrash()
 
 // ── 拾光伴学关键词扩充（含暑假补课场景词）──
 if(DB.clients['shiguang'] && DB.clients['shiguang'].keywords && DB.clients['shiguang'].keywords.length < 36){

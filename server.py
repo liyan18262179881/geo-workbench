@@ -26,6 +26,15 @@ def init_db():
             updated_at TEXT
         )
     ''')
+    # 回收站：删除客户时先移入此处，支持恢复
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS clients_trash (
+            id         TEXT PRIMARY KEY,
+            owner_id   TEXT DEFAULT 'local',
+            data       TEXT NOT NULL,
+            deleted_at TEXT NOT NULL
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -169,6 +178,10 @@ class GEOHandler(SimpleHTTPRequestHandler):
         if self.path == '/api/db':
             self._json(200, {'clients': self._read_all_clients()})
             return
+        # 回收站列表
+        if self.path == '/api/trash':
+            self._json(200, {'trash': self._read_trash()})
+            return
         # 导出备份（浏览器直接下载 json 文件）
         if self.path == '/api/export':
             payload = json.dumps({'clients': self._read_all_clients()}, ensure_ascii=False, indent=2).encode('utf-8')
@@ -195,6 +208,29 @@ class GEOHandler(SimpleHTTPRequestHandler):
                 pass
         return clients
 
+    def _read_trash(self):
+        conn = get_conn()
+        rows = conn.execute(
+            'SELECT id, data, deleted_at FROM clients_trash ORDER BY deleted_at DESC'
+        ).fetchall()
+        conn.close()
+        trash = {}
+        for cid, data, deleted_at in rows:
+            try:
+                item = json.loads(data)
+                item['_deleted_at'] = deleted_at
+                trash[cid] = item
+            except Exception:
+                pass
+        return trash
+
+    def _move_to_trash(self, conn, removed_rows, now):
+        for cid, data in removed_rows:
+            conn.execute(
+                'INSERT OR REPLACE INTO clients_trash(id, owner_id, data, deleted_at) VALUES(?,?,?,?)',
+                (cid, 'local', data, now)
+            )
+
     def do_POST(self):
         length = int(self.headers.get('Content-Length', 0))
         body = json.loads(self.rfile.read(length))
@@ -202,9 +238,8 @@ class GEOHandler(SimpleHTTPRequestHandler):
         # 保存全部客户数据（每个客户一行，整体同步）
         if self.path == '/api/db':
             incoming = body.get('clients')
-            if not isinstance(incoming, dict) or not incoming:
-                # 防呆：空数据不写，避免误清库
-                self._json(400, {'error': '客户数据为空，已拒绝写入'})
+            if not isinstance(incoming, dict):
+                self._json(400, {'error': '客户数据格式不正确'})
                 return
             try:
                 conn = get_conn()
@@ -214,10 +249,72 @@ class GEOHandler(SimpleHTTPRequestHandler):
                         'INSERT OR REPLACE INTO clients(id, owner_id, data, updated_at) VALUES(?,?,?,?)',
                         (cid, 'local', json.dumps(cdata, ensure_ascii=False), now)
                     )
-                # 删除本次未出现的客户（反映前端的删除操作）
+                # 删除前先移入回收站（可恢复）
                 ids = list(incoming.keys())
-                ph = ','.join('?' * len(ids))
-                conn.execute(f'DELETE FROM clients WHERE id NOT IN ({ph})', ids)
+                if ids:
+                    ph = ','.join('?' * len(ids))
+                    removed = conn.execute(
+                        f'SELECT id, data FROM clients WHERE id NOT IN ({ph})', ids
+                    ).fetchall()
+                    if removed:
+                        self._move_to_trash(conn, removed, now)
+                    conn.execute(f'DELETE FROM clients WHERE id NOT IN ({ph})', ids)
+                else:
+                    removed = conn.execute('SELECT id, data FROM clients').fetchall()
+                    if removed:
+                        self._move_to_trash(conn, removed, now)
+                    conn.execute('DELETE FROM clients')
+                conn.commit()
+                conn.close()
+                self._json(200, {'ok': True, 'count': len(incoming), 'trashed': len(removed)})
+            except Exception as e:
+                self._json(500, {'error': str(e)})
+            return
+
+        # 从回收站恢复客户
+        if self.path == '/api/restore':
+            ids = body.get('ids') or ([body.get('id')] if body.get('id') else [])
+            ids = [i for i in ids if i]
+            if not ids:
+                self._json(400, {'error': '请指定要恢复的客户 id'})
+                return
+            try:
+                conn = get_conn()
+                now = datetime.now().isoformat(timespec='seconds')
+                restored = []
+                for cid in ids:
+                    row = conn.execute(
+                        'SELECT data FROM clients_trash WHERE id=?', (cid,)
+                    ).fetchone()
+                    if not row:
+                        continue
+                    conn.execute(
+                        'INSERT OR REPLACE INTO clients(id, owner_id, data, updated_at) VALUES(?,?,?,?)',
+                        (cid, 'local', row[0], now)
+                    )
+                    conn.execute('DELETE FROM clients_trash WHERE id=?', (cid,))
+                    restored.append(cid)
+                conn.commit()
+                conn.close()
+                self._json(200, {'ok': True, 'restored': restored})
+            except Exception as e:
+                self._json(500, {'error': str(e)})
+            return
+
+        # 从备份 JSON 合并导入客户
+        if self.path == '/api/import':
+            incoming = body.get('clients')
+            if not isinstance(incoming, dict) or not incoming:
+                self._json(400, {'error': '备份文件格式不正确'})
+                return
+            try:
+                conn = get_conn()
+                now = datetime.now().isoformat(timespec='seconds')
+                for cid, cdata in incoming.items():
+                    conn.execute(
+                        'INSERT OR REPLACE INTO clients(id, owner_id, data, updated_at) VALUES(?,?,?,?)',
+                        (cid, 'local', json.dumps(cdata, ensure_ascii=False), now)
+                    )
                 conn.commit()
                 conn.close()
                 self._json(200, {'ok': True, 'count': len(incoming)})
