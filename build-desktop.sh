@@ -1,13 +1,26 @@
 #!/usr/bin/env bash
-# 将合并后的 GEO 工作台打包到桌面
+# 将合并后的 GEO 工作台打包到桌面（支持 macOS 中文「桌面」路径）
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 STAMP="$(TZ=Asia/Shanghai date '+%m%d-%H%M')"
 DEST_NAME="GEO工作台_${STAMP}_V1"
-DESKTOP="${HOME}/Desktop"
-DEST="${DESKTOP}/${DEST_NAME}"
+ALIAS_NAME="GEO工作台"
 
-mkdir -p "$DESKTOP" "$DEST/seeds"
+# macOS 中文系统桌面可能是「桌面」
+if [[ -d "${HOME}/Desktop" ]]; then
+  DESKTOP="${HOME}/Desktop"
+elif [[ -d "${HOME}/桌面" ]]; then
+  DESKTOP="${HOME}/桌面"
+else
+  DESKTOP="${HOME}/Desktop"
+  mkdir -p "$DESKTOP"
+fi
+
+DEST="${DESKTOP}/${DEST_NAME}"
+ALIAS="${DESKTOP}/${ALIAS_NAME}"
+
+rm -rf "$DEST"
+mkdir -p "$DEST/seeds"
 
 cp "$ROOT/index.html" "$ROOT/server.py" "$ROOT/recover.py" "$DEST/"
 cp "$ROOT/seeds/restore-GEO工作台.json" "$DEST/seeds/"
@@ -15,12 +28,16 @@ cp "$ROOT/seeds/restore-GEO工作台.json" "$DEST/seeds/"
 cat > "$DEST/启动.command" << 'LAUNCH'
 #!/bin/bash
 cd "$(dirname "$0")"
+export LANG=zh_CN.UTF-8
 if ! python3 -c "import anthropic, openai" 2>/dev/null; then
   pip3 install anthropic openai
 fi
 python3 recover.py --restore-preset 2>/dev/null || true
 echo ""
-echo "✅ 打开浏览器访问 http://localhost:8765"
+echo "✅ 合并版 GEO 工作台"
+echo "   浏览器打开 http://localhost:8765"
+echo "   侧栏应看到客户「GEO工作台」（20个关键词）"
+open "http://localhost:8765" 2>/dev/null || true
 python3 server.py
 LAUNCH
 chmod +x "$DEST/启动.command"
@@ -28,20 +45,11 @@ chmod +x "$DEST/启动.command"
 cat > "$DEST/README.txt" << 'README'
 GEO 工作台 · 完整项目（合并版）
 
-这是可独立运行的 GEO 工作台项目文件夹，已合并原「GEO工作台」与「GEO项目」为单一客户数据。
+已将「GEO工作台」与「GEO项目」合并为单一客户。
 
-目录说明：
-  index.html   — 主程序
-  server.py    — 本地服务
-  recover.py   — 数据恢复脚本
-  geo.db       — 客户数据库（已预置合并客户）
-  seeds/       — 备份种子数据
-  启动.command — macOS 双击启动
-
-启动：
-  macOS：双击「启动.command」
-  终端：python3 server.py
-  浏览器：http://localhost:8765
+启动：双击「启动.command」或运行 python3 server.py
+访问：http://localhost:8765
+侧栏客户：GEO工作台（约 20 个关键词）
 
 依赖：pip3 install anthropic openai
 README
@@ -66,5 +74,17 @@ conn.close()
 print(f'geo.db 已写入 {n} 个合并客户')
 "
 
-echo "✅ 已创建：$DEST"
+# 桌面快捷入口：固定名 GEO工作台 → 指向本次版本文件夹
+rm -rf "$ALIAS"
+ln -sf "$DEST" "$ALIAS"
+
+echo ""
+echo "════════════════════════════════════════"
+echo "✅ 合并版 GEO 工作台已放到桌面"
+echo "   文件夹：$DEST"
+echo "   快捷入口：$ALIAS"
+echo "════════════════════════════════════════"
 ls -la "$DEST"
+if [[ "$(uname)" == "Darwin" ]]; then
+  open "$DESKTOP" 2>/dev/null || true
+fi

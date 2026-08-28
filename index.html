@@ -2200,22 +2200,27 @@ async function restoreClient(id){
 }
 
 async function restorePresetClientsIfMissing(){
-  // 合并版：单一客户 c_geo_workbench；若存在旧版 c_geo_project 则移除
+  let changed = false
+  // 移除旧版拆分客户 GEO项目
   if(DB.clients['c_geo_project']){
     delete DB.clients['c_geo_project']
-    DB.save()
+    changed = true
   }
-  if(DB.clients['c_geo_workbench']) return false
   try{
     const r = await fetch('seeds/restore-GEO工作台.json')
-    if(!r.ok) return false
+    if(!r.ok) return changed
     const data = await r.json()
-    const c = data.clients?.['c_geo_workbench']
-    if(!c) return false
-    DB.clients['c_geo_workbench'] = c
-    DB.save()
-    return true
-  }catch(e){ return false }
+    const merged = data.clients?.['c_geo_workbench']
+    if(!merged) return changed
+    const cur = DB.clients['c_geo_workbench']
+    const needMerge = !cur || (cur.keywords?.length || 0) < 18 || cur.core_services?.length < 5
+    if(needMerge){
+      DB.clients['c_geo_workbench'] = merged
+      changed = true
+    }
+    if(changed) DB.save()
+    return changed
+  }catch(e){ return changed }
 }
 
 async function restorePresetClients(){
@@ -2239,6 +2244,8 @@ async function restorePresetClients(){
     alert('恢复失败，请确认 server.py 已启动')
   }
 }
+
+async function importBackupFile(ev){
   const file = ev.target.files?.[0]
   ev.target.value = ''
   if(!file) return
@@ -2268,9 +2275,6 @@ async function restorePresetClients(){
   }catch(e){
     alert('文件格式错误，请选择 geo-backup-*.json 备份文件')
   }
-}
-  else if(DB._syncOk === false){ el.textContent = '⚠️ 仅本地（数据库未连接）'; el.style.color = '#f59e0b' }
-  else { el.textContent = '🗄️ …'; el.style.color = '#9ca3af' }
 }
 
 // ══════════════════════════════════════════════
