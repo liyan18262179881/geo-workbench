@@ -22,23 +22,14 @@ ALIAS="${DESKTOP}/${ALIAS_NAME}"
 rm -rf "$DEST"
 mkdir -p "$DEST/seeds"
 
-cp "$ROOT/index.html" "$ROOT/server.py" "$ROOT/recover.py" "$DEST/"
+cp "$ROOT/index.html" "$ROOT/server.py" "$ROOT/recover.py" "$ROOT/start.sh" "$DEST/"
+chmod +x "$DEST/start.sh"
 cp "$ROOT/seeds/restore-GEO工作台.json" "$DEST/seeds/"
 
 cat > "$DEST/启动.command" << 'LAUNCH'
 #!/bin/bash
 cd "$(dirname "$0")"
-export LANG=zh_CN.UTF-8
-if ! python3 -c "import anthropic, openai" 2>/dev/null; then
-  pip3 install anthropic openai
-fi
-python3 recover.py --restore-preset 2>/dev/null || true
-echo ""
-echo "✅ 合并版 GEO 工作台"
-echo "   浏览器打开 http://localhost:8765"
-echo "   侧栏应看到客户「GEO工作台」（20个关键词）"
-open "http://localhost:8765" 2>/dev/null || true
-python3 server.py
+exec ./start.sh
 LAUNCH
 chmod +x "$DEST/启动.command"
 

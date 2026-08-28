@@ -20,7 +20,7 @@ ALIAS="${DESKTOP}/GEO工作台"
 echo "正在复制到桌面…"
 rm -rf "$DEST"
 mkdir -p "$DEST"
-cp "$ROOT/index.html" "$ROOT/server.py" "$ROOT/recover.py" "$DEST/"
+cp "$ROOT/index.html" "$ROOT/server.py" "$ROOT/recover.py" "$ROOT/start.sh" "$DEST/"
 cp -R "$ROOT/seeds" "$DEST/"
 
 # 写入合并客户数据库
@@ -42,13 +42,11 @@ print('geo.db OK')
 cat > "$DEST/启动.command" << 'EOF'
 #!/bin/bash
 cd "$(dirname "$0")"
-if ! python3 -c "import anthropic, openai" 2>/dev/null; then pip3 install anthropic openai
-fi
-echo "✅ 浏览器打开 http://localhost:8765"
-open "http://localhost:8765"
-python3 server.py
+exec ./start.sh
 EOF
 chmod +x "$DEST/启动.command"
+cp "$ROOT/start.sh" "$DEST/"
+chmod +x "$DEST/start.sh"
 
 rm -rf "$ALIAS"
 ln -sf "$DEST" "$ALIAS"
